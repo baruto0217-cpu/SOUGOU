@@ -1,6 +1,6 @@
 // Service Worker — 救急アセスメント総合支援
 // キャッシュ名（バージョンを上げると古いキャッシュが削除される）
-const CACHE_NAME = 'emergency-suite-v33';
+const CACHE_NAME = 'emergency-suite-v34';
 
 // キャッシュするファイル一覧
 const CACHE_FILES = [
@@ -23,7 +23,13 @@ const CACHE_FILES = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(CACHE_FILES);
+      // ブラウザの一時保存(HTTPキャッシュ)を使わず、必ず最新を取得して保存する
+      return Promise.all(CACHE_FILES.map(url =>
+        fetch(new Request(url, { cache: 'reload' })).then(res => {
+          if (!res.ok) throw new Error(url + ' ' + res.status);
+          return cache.put(url, res);
+        })
+      ));
     })
   );
   // 古いService Workerを待たずに即座に有効化
