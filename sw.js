@@ -1,6 +1,6 @@
 // Service Worker — 救急アセスメント総合支援
 // キャッシュ名（バージョンを上げると古いキャッシュが削除される）
-const CACHE_NAME = 'emergency-suite-v31';
+const CACHE_NAME = 'emergency-suite-v32';
 
 // キャッシュするファイル一覧
 const CACHE_FILES = [
@@ -45,7 +45,7 @@ self.addEventListener('activate', event => {
 // フェッチ時：キャッシュ優先（Cache First）
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(cached => {
+    caches.match(event.request, { ignoreSearch: true }).then(cached => {
       if (cached) return cached;
       // キャッシュになければネットワークから取得してキャッシュに追加
       return fetch(event.request).then(response => {

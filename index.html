@@ -263,6 +263,12 @@ function openApp(name) {
   });
 }
 
+// ?app=ecg などの直行リンク（旧リポジトリからの移転先）
+(function () {
+  const q = new URLSearchParams(location.search).get('app');
+  if (q && Object.prototype.hasOwnProperty.call(APP_SRCS, q)) openApp(q);
+})();
+
 function closeApp() {
   if (!current) return;
   const frame = document.getElementById('frame-' + current);
