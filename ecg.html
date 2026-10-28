@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>救急12誘導心電図 参照アプリ</title>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('in-frame');}catch(e){document.documentElement.classList.add('in-frame');}</script>
+<style>
+/* ─── Reset & Base ─── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f0;--surface:#fff;--surface2:#fafaf8;
+  --border:#e4e0d8;--border2:#d0ccc4;
+  --text:#1a1a18;--text2:#5a5854;--text3:#9a9690;
+  --red:#b83222;--red-bg:#fff4f2;--red-lt:#fde8e4;
+  --blue:#1a6fbf;--blue-bg:#f0f6ff;--blue-lt:#daeaff;
+  --amber:#9a6010;--amber-bg:#fffbf0;
+  --green:#2d7a3a;--green-bg:#f0faf2;
+  --ecg-paper:#fffdf5;--ecg-grid:#f0c8a0;--ecg-grid2:#e8b490;
+  --ecg-line:#1a1a1a;--ecg-cal:#c8a060;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN','Yu Gothic UI',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;font-size:13px;line-height:1.5}
+
+/* ─── Layout ─── */
+.app{max-width:780px;margin:0 auto;padding:14px 14px 40px}
+header{margin-bottom:16px}
+header h1{font-size:16px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px}
+header p{font-size:11px;color:var(--text3)}
+.grid-note{font-size:11px;color:var(--text3);margin:0 2px 10px;line-height:1.5}
+html.in-frame header h1{display:none}
+html.in-frame header{margin-bottom:10px}
+
+/* ─── Tabs ─── */
+.tabs{display:flex;border-bottom:1.5px solid var(--border);margin-bottom:14px;
+  background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  overflow:hidden;flex-wrap:wrap}
+.tab{padding:9px 13px;font-size:12px;font-weight:500;border:none;background:none;
+  color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;
+  white-space:nowrap;transition:color .15s,border-color .15s}
+.tab.on{color:var(--text);border-bottom-color:var(--text)}
+.pane{display:none}.pane.on{display:block}
+
+/* ─── Filter pills ─── */
+.filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.flt{padding:4px 11px;font-size:11px;font-weight:500;
+  border:1px solid var(--border2);border-radius:20px;
+  background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.flt.on{background:var(--text);color:var(--surface);border-color:var(--text)}
+
+/* ─── Wave Cards ─── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;cursor:pointer;transition:border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card:hover{border-color:var(--border2)}
+.card.hidden{display:none}
+.card-head{padding:9px 13px 5px}
+.tag{display:inline-block;padding:2px 7px;font-size:10px;font-weight:600;border-radius:10px;margin-bottom:3px}
+.dname{font-size:12px;font-weight:700;color:var(--text)}
+.dsub{font-size:10px;color:var(--text3)}
+.ecg-wrap{margin:5px 11px;border-radius:5px;overflow:hidden}
+.ecg-wrap svg{display:block;width:100%}
+.lbls{display:flex;flex-wrap:wrap;gap:3px;padding:3px 11px}
+.lbl{font-size:9px;padding:2px 5px;border-radius:4px;font-weight:600}
+.detail{padding:0 11px;max-height:0;overflow:hidden;transition:max-height .32s ease}
+.detail.open{max-height:300px}
+.detail-inner{border-top:1px solid var(--border);padding:7px 0 9px}
+.drow{display:flex;gap:7px;font-size:11px;padding:2px 0}
+.dk{color:var(--text3);min-width:78px;flex-shrink:0;font-weight:500}
+.dv{color:var(--text);flex:1;line-height:1.5}
+.tog{width:100%;background:none;border:none;border-top:1px solid var(--border);
+  padding:6px;font-size:11px;color:var(--text3);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:3px}
+.arw{display:inline-block;transition:transform .22s;font-size:9px}
+.arw.open{transform:rotate(180deg)}
+
+/* ─── 12-lead Map ─── */
+.lead-sel{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.ls{padding:5px 10px;font-size:11px;font-weight:500;
+  border:1px solid var(--border2);border-radius:6px;
+  background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.ls.on{background:var(--red);color:#fff;border-color:var(--red)}
+.l12-info{background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:9px 13px;margin-bottom:9px;
+  font-size:11px;line-height:1.7}
+.l12-title{font-size:13px;font-weight:700;margin-bottom:5px;
+  display:flex;align-items:center;gap:7px}
+.l12-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.l12-extra-title{font-size:11px;font-weight:700;margin:12px 2px 2px;color:var(--text)}
+.l12-extra-note{font-size:10.5px;color:var(--text3);margin:0 2px 6px;line-height:1.5}
+.lead-cell{border-radius:5px;overflow:hidden;background:var(--ecg-paper);
+  border:1px solid var(--border)}
+.lead-cell.hl {border:2px solid var(--red);background:var(--red-lt)}
+.lead-cell.hl2{border:2px solid var(--blue);background:var(--blue-lt)}
+.lead-cell.hl3{border:1.5px solid var(--amber);background:var(--amber-bg)}
+.lead-cell.hl4{border:2px solid #6c2fa0;background:#f3ecfb}
+.lead-name{font-size:9px;font-weight:700;padding:2px 5px 0;
+  color:var(--text3);background:inherit}
+.lead-cell.hl  .lead-name{color:var(--red)}
+.lead-cell.hl2 .lead-name{color:var(--blue)}
+.lead-cell.hl3 .lead-name{color:var(--amber)}
+.lead-cell.hl4 .lead-name{color:#6c2fa0}
+.lead-cell svg{display:block;width:100%}
+.finding{font-size:11px;padding:7px 11px;background:var(--amber-bg);
+  border-radius:6px;margin-top:7px;border-left:2.5px solid #e8a000;
+  color:var(--text);line-height:1.65}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-size:11px}
+.leg{display:flex;align-items:center;gap:4px;color:var(--text2)}
+.leg-box{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* ─── Flow Tab ─── */
+.flow-panel{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:14px;margin-bottom:12px}
+.flow-panel h3{font-size:12px;font-weight:700;margin-bottom:4px}
+.flow-src{font-size:10px;color:var(--text3);margin-bottom:13px}
+.flow-panel svg{display:block;width:100%}
+.st-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+.st-table th{background:var(--surface2);padding:6px 10px;text-align:left;
+  font-weight:600;font-size:10px;color:var(--text2);
+  border-bottom:1px solid var(--border)}
+.st-table td{padding:6px 10px;border-bottom:1px solid var(--border)}
+.st-table tr:last-child td{border-bottom:none}
+.st-val{color:var(--red);font-weight:700}
+.st-note{color:var(--text3);font-size:10px}
+.proto-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.proto-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px}
+.proto-title{font-size:11px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.proto-item{display:flex;align-items:flex-start;gap:7px;padding:5px 0;
+  border-bottom:1px solid var(--bg);cursor:pointer}
+.proto-item:last-child{border-bottom:none}
+.pnum{width:19px;height:19px;min-width:19px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;background:var(--bg);
+  color:var(--text2);transition:all .15s;margin-top:1px}
+.proto-item.done .pnum{background:var(--green);color:#fff}
+.ptext{font-size:11px;flex:1;line-height:1.5}
+.psub{font-size:10px;color:var(--text3);margin-top:1px}
+.prog-bg{background:var(--bg);border-radius:3px;height:4px;margin-top:7px}
+.prog-fg{height:4px;border-radius:3px;background:var(--green);transition:width .3s}
+.prog-lbl{font-size:10px;color:var(--text3);margin-top:3px}
+.note-box{background:var(--surface2);border-radius:6px;padding:8px 11px;
+  font-size:11px;color:var(--text2);line-height:1.65;
+  border-left:3px solid var(--border2)}
+
+/* ─── Box model ─── */
+.box-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.bpanel{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:11px}
+.bpanel svg{display:block;width:100%}
+.bleg{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.blegi{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)}
+.bleg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+.sum-card{border-radius:var(--radius);padding:9px 11px}
+.sum-title{font-size:11px;font-weight:700;margin-bottom:3px}
+.sum-leads{font-size:11px;margin-bottom:2px}
+.sum-vessel{font-size:10px;opacity:.75}
+.recip-wrap{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:12px;margin-top:10px}
+.recip-title{font-size:12px;font-weight:700;margin-bottom:8px}
+.recip-btns{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.recip-btn{padding:5px 11px;font-size:11px;font-weight:500;
+  border:1px solid var(--border2);border-radius:6px;
+  background:var(--surface);color:var(--text2);cursor:pointer}
+.recip-btn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.recip-body{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.rtrow{display:flex;align-items:center;gap:7px;padding:4px 0;
+  border-bottom:1px solid var(--border)}
+.rtrow:last-child{border-bottom:none}
+.rtlead{min-width:58px;font-weight:700;font-size:11px}
+.rtst{min-width:48px;font-size:11px;font-weight:700}
+.rtdesc{color:var(--text3);flex:1;font-size:10px}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--text3);
+  margin-bottom:7px;letter-spacing:.04em}
+
+@media(max-width:600px){
+  .box-two,.recip-body,.proto-grid{grid-template-columns:1fr}
+  .sum-grid{grid-template-columns:1fr}
+  .l12-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+/* ─── Diagnosis Tab ─── */
+.intro-dx{font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.5}
+.lead-grid-dx{display:grid;grid-template-columns:52px 1fr;gap:0;border:.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:6px;background:var(--surface)}
+.lead-name-dx{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text2);background:var(--surface2);border-right:.5px solid var(--border);min-height:46px;padding:4px}
+.btn-row-dx{display:flex;gap:4px;align-items:center;padding:6px 8px;flex-wrap:wrap}
+.sig-btn{padding:3px 8px;font-size:11px;font-weight:500;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .13s;white-space:nowrap;line-height:1.4}
+.sig-btn:hover{background:var(--surface2)}
+.sig-btn.on-rise{background:#FCEBEB;color:#791F1F;border-color:#E24B4A}
+.sig-btn.on-dep{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+.sig-btn.on-tall{background:#FAEEDA;color:#412402;border-color:#BA7517}
+.sig-btn.on-inv{background:#EAF3DE;color:#27500A;border-color:#639922}
+.sig-btn.on-q{background:#FCEBEB;color:#501313;border-color:#A32D2D}
+.sig-btn.on-norm{background:#F1EFE8;color:#444441;border-color:#888780}
+.group-lbl-dx{font-size:10px;color:var(--text3);padding:6px 0 2px;font-weight:500;letter-spacing:.04em}
+.sel-summary{font-size:11px;color:var(--text3);margin:8px 0 10px;min-height:16px;line-height:1.5}
+.result-box{border-radius:var(--radius-lg);border:.5px solid var(--border);padding:14px 16px;background:var(--surface)}
+.result-empty{font-size:12px;color:var(--text3);text-align:center;padding:24px 0}
+.dx-card{border-radius:var(--radius);padding:11px 14px;margin-bottom:8px;border:.5px solid var(--border)}
+.dx-card:last-child{margin-bottom:0}
+.dx-card.c-high{background:#FCEBEB;border-color:#E24B4A}
+.dx-card.c-mid{background:#FAEEDA;border-color:#BA7517}
+.dx-card.c-low{background:#F1EFE8;border-color:#B4B2A9}
+.dx-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.dx-dname{font-size:13px;font-weight:500}
+.dx-card.c-high .dx-dname{color:#501313}
+.dx-card.c-mid  .dx-dname{color:#412402}
+.dx-card.c-low  .dx-dname{color:#444441}
+.dx-prob{font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px}
+.dx-card.c-high .dx-prob{background:#E24B4A;color:#fff}
+.dx-card.c-mid  .dx-prob{background:#BA7517;color:#fff}
+.dx-card.c-low  .dx-prob{background:#888780;color:#fff}
+.dx-vessel{font-size:11px;color:var(--text2);margin-bottom:3px}
+.dx-reason{font-size:11px;color:var(--text2);line-height:1.55}
+.dx-warn{margin-top:6px;font-size:11px;padding:6px 10px;background:#fffdf5;border-radius:6px;border-left:2.5px solid #BA7517;color:var(--text);line-height:1.55}
+.rst-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px}
+.no-match{font-size:12px;color:var(--text2);padding:16px 0;text-align:center;line-height:1.6}
+.reset-dx{width:100%;margin-top:10px;padding:7px;font-size:12px;color:var(--text2);background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);cursor:pointer}
+
+/* ─── Protocol Check Tab ─── */
+.chk-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:12px}
+.chk-prog-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.chk-prog-title{font-size:13px;font-weight:700;flex:1;color:var(--text)}
+.chk-prog-count{font-size:12px;color:var(--text2)}
+.chk-bar-bg{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.chk-bar-fg{height:5px;border-radius:3px;background:#2d7a3a;transition:width .4s}
+.phase-row{display:flex;gap:5px;flex-wrap:wrap}
+.ph-btn{padding:3px 9px;font-size:10px;font-weight:500;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text3);transition:all .15s}
+.ph-btn.ph-done{background:#EAF3DE;color:#27500A;border-color:#639922}
+.ph-btn.ph-now{background:var(--text);color:var(--surface);border-color:var(--text)}
+.step-card{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);margin-bottom:9px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.step-card.s-active{border-color:#185FA5;box-shadow:0 0 0 2px rgba(24,95,165,.07)}
+.step-card.s-done{border-color:#639922;background:#fafffe}
+.step-head{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;cursor:pointer}
+.step-num-circle{width:24px;height:24px;min-width:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;background:var(--bg);color:var(--text2);margin-top:1px;transition:all .2s}
+.step-card.s-active .step-num-circle{background:#185FA5;color:#fff}
+.step-card.s-done   .step-num-circle{background:#2d7a3a;color:#fff}
+.step-meta{flex:1}
+.step-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.step-sub{font-size:11px;color:var(--text3);line-height:1.4}
+.step-badge{display:inline-block;font-size:10px;font-weight:500;padding:1px 6px;border-radius:10px;margin-top:3px}
+.sb-wait{background:var(--bg);color:var(--text3)}
+.sb-now{background:#E6F1FB;color:#0C447C}
+.sb-done{background:#EAF3DE;color:#27500A}
+.step-body{display:none;border-top:1px solid var(--border);padding:13px 14px}
+.step-body.open{display:block}
+.ci-list{margin-bottom:10px}
+.ci{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:.5px solid var(--border);cursor:pointer}
+.ci:last-child{border-bottom:none}
+.ci-box{width:19px;height:19px;min-width:19px;border:.5px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s;background:var(--surface)}
+.ci-box.ci-done{background:#2d7a3a;border-color:#2d7a3a;color:#fff}
+.ci-txt{flex:1;font-size:11px;color:var(--text);line-height:1.5}
+.ci-hint{font-size:10px;color:var(--text3);margin-top:1px}
+.rg-wrap{margin-bottom:10px}
+.rg-label{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.rg-row{display:flex;gap:5px;flex-wrap:wrap}
+.rg-btn{padding:4px 10px;font-size:11px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .14s}
+.rg-btn.rg-ok{background:#EAF3DE;color:#27500A;border-color:#639922}
+.rg-btn.rg-ng{background:#FCEBEB;color:#791F1F;border-color:#E24B4A}
+.rg-btn.rg-warn{background:#FAEEDA;color:#412402;border-color:#BA7517}
+.rg-btn.rg-neutral{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+.rg-alert{margin-top:6px;font-size:11px;padding:7px 10px;border-radius:6px;border-left:2.5px solid transparent;line-height:1.55}
+.ra-info{background:#E6F1FB;border-color:#185FA5;color:#0C447C}
+.ra-warn{background:#FAEEDA;border-color:#BA7517;color:#633806}
+.ra-danger{background:#FCEBEB;border-color:#E24B4A;color:#791F1F}
+.ra-ok{background:#EAF3DE;border-color:#639922;color:#27500A}
+.lf-wrap{margin-bottom:10px}
+.lf-row{display:flex;align-items:center;gap:5px;padding:5px 0;border-bottom:.5px solid var(--border);flex-wrap:wrap}
+.lf-row:last-child{border-bottom:none}
+.lf-name{font-size:11px;font-weight:500;color:var(--text2);min-width:34px}
+.lf-btn{padding:3px 7px;font-size:10px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .13s}
+.lf-btn.lf-ok{background:#EAF3DE;color:#27500A;border-color:#639922}
+.lf-btn.lf-rise{background:#FCEBEB;color:#791F1F;border-color:#E24B4A}
+.lf-btn.lf-dep{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+.lf-btn.lf-tall{background:#FAEEDA;color:#412402;border-color:#BA7517}
+.lf-btn.lf-inv{background:#EAF3DE;color:#085041;border-color:#1D9E75}
+.lf-btn.lf-q{background:#FCEBEB;color:#501313;border-color:#A32D2D}
+.inp-grp{margin-bottom:9px}
+.inp-lbl{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:3px}
+.btn-complete{width:100%;margin-top:10px;padding:9px;font-size:12px;font-weight:500;background:#185FA5;color:#fff;border:none;border-radius:var(--radius);cursor:pointer}
+.btn-complete:hover{background:#0C447C}
+.result-panel-chk{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-top:12px;display:none}
+.result-panel-chk.open{display:block}
+.rpc-title{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.rpc-sec-title{font-size:11px;font-weight:500;color:var(--text3);margin-bottom:6px;letter-spacing:.04em}
+.find-grid-chk{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px}
+.find-chip{border-radius:var(--radius);padding:6px 9px;font-size:11px}
+.find-chip b{display:block;font-size:10px;margin-bottom:1px}
+.dxc-card{border-radius:var(--radius);padding:10px 12px;margin-bottom:7px;border:.5px solid transparent}
+.dxc-high{background:#FCEBEB;border-color:#E24B4A}
+.dxc-mid{background:#FAEEDA;border-color:#BA7517}
+.dxc-low{background:#F1EFE8;border-color:#B4B2A9}
+.dxc-name{font-size:12px;font-weight:700;margin-bottom:3px}
+.dxc-high .dxc-name{color:#501313}
+.dxc-mid  .dxc-name{color:#412402}
+.dxc-low  .dxc-name{color:#444441}
+.dxc-detail{font-size:11px;color:var(--text2);line-height:1.5}
+.dxc-warn{margin-top:5px;font-size:11px;padding:5px 8px;background:#fffdf5;border-radius:4px;border-left:2px solid #BA7517;line-height:1.5;color:var(--text)}
+.prob-badge{font-size:10px;font-weight:500;padding:1px 6px;border-radius:10px;margin-left:5px}
+.pb-high{background:#E24B4A;color:#fff}
+.pb-mid{background:#BA7517;color:#fff}
+.pb-low{background:#888780;color:#fff}
+.report-txt{background:var(--surface2);border-radius:var(--radius);padding:12px;font-size:11px;line-height:1.8;color:var(--text);white-space:pre-line;margin-bottom:10px}
+.btn-reset-chk{width:100%;padding:8px;font-size:12px;color:var(--text2);background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;margin-top:6px}
+
+/* ─── Flow App ─── */
+#flow-app{font-family:var(--font-sans,-apple-system,sans-serif);max-width:480px;margin:0 auto}
+.fa-card{background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.10);padding:22px 20px 18px;margin-bottom:16px;transition:transform .2s}
+.fa-card-accent{border-top:4px solid #1a6fbf}
+.fa-card-warn  {border-top:4px solid #c8840a}
+.fa-card-green {border-top:4px solid #2d7a3a}
+.fa-card-red   {border-top:4px solid #b83222}
+.fa-card-dark  {background:#1a6fbf;border-radius:20px;padding:22px 20px 18px;margin-bottom:16px;box-shadow:0 4px 20px rgba(26,111,191,.35)}
+.fa-step-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.04em}
+.fa-badge-blue {background:#daeaff;color:#1a6fbf}
+.fa-badge-warn {background:#fff0cc;color:#8a5a00}
+.fa-badge-green{background:#d4f0dc;color:#1a5a28}
+.fa-badge-red  {background:#fde0d8;color:#b83222}
+.fa-badge-dark {background:rgba(255,255,255,.2);color:#fff}
+.fa-badge-gray {background:#f0f0ee;color:#666}
+.fa-title{font-size:17px;font-weight:700;color:#1a1a18;line-height:1.35;margin-bottom:5px}
+.fa-title-dark{font-size:17px;font-weight:700;color:#fff;line-height:1.35;margin-bottom:5px}
+.fa-sub{font-size:12px;color:#777;line-height:1.55;margin-bottom:12px}
+.fa-sub-dark{font-size:12px;color:rgba(255,255,255,.8);line-height:1.55;margin-bottom:12px}
+.fa-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.fa-tag{display:inline-block;padding:4px 9px;font-size:11px;font-weight:600;border-radius:8px;background:#fff0e8;color:#7a4400;border:.5px solid #e8c090}
+.fa-btn-row{display:flex;gap:8px;flex-direction:column}
+.fa-btn{width:100%;padding:14px 16px;font-size:14px;font-weight:700;border:none;border-radius:14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.fa-btn:active{transform:scale(.97)}
+.fa-btn-green{background:linear-gradient(135deg,#2d7a3a,#4aad5a);color:#fff}
+.fa-btn-red  {background:linear-gradient(135deg,#b83222,#e04040);color:#fff}
+.fa-btn-gray {background:#f0f0ee;color:#444}
+.fa-btn-blue {background:linear-gradient(135deg,#1a6fbf,#3a90e0);color:#fff}
+.fa-btn-next {background:linear-gradient(135deg,#1a1a18,#444);color:#fff}
+.fa-btn-arrow{font-size:18px;opacity:.7}
+.fa-btn-disabled{opacity:.35;cursor:default;pointer-events:none}
+.fa-progress-wrap{margin-bottom:14px}
+.fa-progress-track{height:6px;background:#f0f0ee;border-radius:3px;overflow:hidden}
+.fa-progress-fill{height:6px;border-radius:3px;background:linear-gradient(90deg,#1a6fbf,#4aad5a);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.fa-progress-label{font-size:11px;color:#aaa;margin-top:4px;text-align:right}
+.fa-result{border-radius:16px;padding:18px 16px;text-align:center;margin-bottom:12px}
+.fa-result-ok  {background:linear-gradient(135deg,#2d7a3a,#4aad5a)}
+.fa-result-ng  {background:linear-gradient(135deg,#b83222,#e04040)}
+.fa-result-norm{background:#f0f0ee}
+.fa-result-icon{font-size:36px;margin-bottom:8px}
+.fa-result-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.fa-result-title-gray{font-size:16px;font-weight:700;color:#444;margin-bottom:4px}
+.fa-result-sub{font-size:12px;color:rgba(255,255,255,.85);line-height:1.5}
+.fa-result-sub-gray{font-size:12px;color:#777;line-height:1.5}
+.fa-alert{border-radius:12px;padding:12px 14px;margin-top:10px;font-size:12px;line-height:1.55}
+.fa-alert-warn{background:#fff0cc;color:#7a4400;border:.5px solid #e8c090}
+.fa-alert-danger{background:#fde0d8;color:#b83222;border:.5px solid #f0b0a0}
+.fa-alert-ok{background:#d4f0dc;color:#1a5a28;border:.5px solid #a0d8b0}
+.fa-reset{width:100%;padding:12px;font-size:13px;font-weight:600;color:#aaa;background:#fff;border:1.5px solid #e8e8e4;border-radius:14px;cursor:pointer;margin-top:4px}
+.fa-reset:active{background:#f5f5f3}
+.fa-notes{font-size:10px;color:#bbb;line-height:1.8;margin-top:16px;padding:10px 2px;border-top:.5px solid #eee}
+@keyframes fa-slidein{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fa-animate{animation:fa-slidein .28s ease both}
+.fa-arrow{display:flex;justify-content:center;padding:2px 0;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>救急12誘導心電図 参照アプリ</h1>
+  <p>日本循環器学会・日本臨床救急医学会提言 ／ 布施淳・佐藤弘明 準拠 ／ 実波形キャリブレーション済 v4.0</p>
+</header>
+
+<div class="tabs">
+  <button class="tab on" onclick="sw('chk')">✅ 測定チェック</button>
+  <button class="tab" onclick="sw('dx')">🔍 所見→判断</button>
+  <button class="tab" onclick="sw('wave')">📈 疾患別波形</button>
+  <button class="tab" onclick="sw('lead12')">🗺 12誘導マップ</button>
+  <button class="tab" onclick="sw('flow')">📐 ST診断基準</button>
+</div>
+
+<!-- ══ PROTOCOL TAB ══ -->
+<div id="pane-flow" class="pane">
+  <div class="flow-panel">
+    <h3>ST上昇の診断基準（J点から計測）</h3>
+    <div class="flow-src">出典：第4次心筋梗塞universal definition（2018）・日本循環器学会ACSガイドライン（2018）・現代医学2022・MSD</div>
+    <table class="st-table">
+      <thead><tr><th>誘導</th><th>基準値</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>通常誘導（隣接2誘導以上）</td><td><span class="st-val">≥1mm</span></td><td class="st-note">0.1mV、隣接する誘導で連続が必要</td></tr>
+        <tr><td>V2〜V3（男性 40歳以上）</td><td><span class="st-val">≥2mm</span></td><td class="st-note">正常でも軽度上昇あり→前回ECGと比較</td></tr>
+        <tr><td>V2〜V3（男性 40歳未満）</td><td><span class="st-val">≥2.5mm</span></td><td class="st-note">若年男性は早期再分極に注意</td></tr>
+        <tr><td>V2〜V3（女性・年齢問わず）</td><td><span class="st-val">≥1.5mm</span></td><td class="st-note"></td></tr>
+        <tr><td>aVR</td><td><span class="st-val">単独の診断閾値なし</span></td><td class="st-note">広範なST低下と併存するaVR上昇は、広範な心内膜下虚血・左主幹部／多枝病変を示唆（確定はできない。重症虚血を疑う所見）</td></tr>
+        <tr><td>V7〜V9（後壁梗塞追加誘導）</td><td><span class="st-val">≥0.5mm（男性40歳未満 ≥1mm）</span></td><td class="st-note">下壁梗塞でV2〜V5 ST低下があれば追加</td></tr>
+        <tr><td>V3R・V4R（右側胸部誘導）</td><td><span class="st-val">≥0.5mm（男性30歳未満 ≥1mm）</span></td><td class="st-note">右室梗塞を支持。JCSガイドラインはV4R ≥1mmが有用と記載</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="flow-panel" style="margin-top:10px">
+    <h3>異常Q波の診断基準</h3>
+    <div class="flow-src">出典：第4次心筋梗塞universal definition（2018）表3・MSDマニュアル・佐藤弘明「レジデントのためのこれだけ心電図」</div>
+    <table class="st-table">
+      <thead><tr><th>基準</th><th>定義</th><th>備考</th></tr></thead>
+      <tbody>
+        <tr><td>Ⅰ・Ⅱ・aVL・aVF・V4〜V6</td><td><span class="st-val">幅≥30ms かつ 深さ≥1mm、またはQS</span></td><td class="st-note">隣接する誘導群のうち2誘導以上（第4次定義）</td></tr>
+        <tr><td>V2〜V3</td><td><span class="st-val">幅＞20ms、またはQS</span></td><td class="st-note">V2〜V3のQ波・QSは正常ではみられにくい（第4次定義）</td></tr>
+        <tr><td>V1</td><td><span class="st-val">QS型は正常でもみられる</span></td><td class="st-note">V1のQSのみでは異常とは判断しない</td></tr>
+        <tr><td>aVR</td><td><span class="st-val">QS型は正常にみられる</span></td><td class="st-note">aVRはすべての波形が逆転するため、単独では梗塞所見としない</td></tr>
+        <tr><td>従来の目安</td><td><span class="st-val">幅≥40ms（≥1小マス）・深さ≥R波の1/4</span></td><td class="st-note">従来から使われる目安。梗塞の正式な判定は上記の第4次定義</td></tr>
+      </tbody>
+    </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+      <div style="background:#fff8f0;border:1px solid #e8c090;border-radius:var(--radius);padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#633806;margin-bottom:7px">⏱ 出現時期と意義</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.75">
+          <div style="display:flex;gap:6px;margin-bottom:2px"><span style="background:#fde8e4;color:#791f1f;padding:1px 6px;border-radius:4px;font-size:10px;white-space:nowrap;font-weight:600">発症2〜3時間後</span>異常Q波が出現し始める</div>
+          <div style="display:flex;gap:6px;margin-bottom:2px"><span style="background:#fde8e4;color:#791f1f;padding:1px 6px;border-radius:4px;font-size:10px;white-space:nowrap;font-weight:600">発症6〜12時間後</span>ほぼ全例で出現</div>
+          <div style="display:flex;gap:6px;margin-bottom:2px"><span style="background:#f0f0ee;color:#444;padding:1px 6px;border-radius:4px;font-size:10px;white-space:nowrap;font-weight:600">治癒後も永続</span>心筋壊死の永続マーカー</div>
+          <div style="display:flex;gap:6px"><span style="background:#e8e4fc;color:#2e1e80;padding:1px 6px;border-radius:4px;font-size:10px;white-space:nowrap;font-weight:600">超急性期</span>異常Q波なし（まだ出現前）</div>
+        </div>
+      </div>
+      <div style="background:#f0f6ff;border:1px solid #b0ccee;border-radius:var(--radius);padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#0a3f7f;margin-bottom:7px">⚠️ 偽性異常Q波（鑑別）</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.75">
+          <div>・<b>完全左脚ブロック（LBBB）</b><br>　V1〜V3にQ波→正常のQS型</div>
+          <div style="margin-top:4px">・<b>WPW症候群</b><br>　デルタ波が陰性→偽Q波に見える</div>
+          <div style="margin-top:4px">・<b>肥大型心筋症</b><br>　中隔性Q波（I・aVL・V5・V6）</div>
+          <div style="margin-top:4px">・<b>右室負荷</b><br>　V1〜V3のQS型</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px;background:#fafaf8;border-radius:6px;padding:8px 11px;font-size:11px;color:var(--text2);line-height:1.7;border-left:3px solid var(--border2)">
+      <b>Poor R progression（R波増高不良）</b>：V1→V5にかけてR波が順次増高しないパターン。V3またはV4でR波≤3mmが目安。前壁梗塞の陳旧性変化として重要。<br>
+      <b>QS型</b>：R波が完全に消失した誘導（深い陰性波のみ）。貫壁性梗塞（全層梗塞）を示唆。V2〜V4のQS型は前壁中隔の貫壁性梗塞の指標（V1のQSは正常でもみられる）。
+    </div>
+  </div>
+</div>
+
+<!-- ══ WAVE CARDS TAB ══ -->
+<div id="pane-wave" class="pane">
+  <div class="filter">
+    <button class="flt on" onclick="filt('all',this)">すべて</button>
+    <button class="flt" onclick="filt('ischemia',this)">虚血・梗塞</button>
+    <button class="flt" onclick="filt('arrhythmia',this)">不整脈</button>
+    <button class="flt" onclick="filt('block',this)">ブロック</button>
+    <button class="flt" onclick="filt('other',this)">電解質・その他</button>
+  </div>
+  <div class="grid-note">グリッド：25mm/秒・10mm/mV。小マス＝0.04秒・0.1mV、大マス（太線）＝0.2秒・0.5mV。左端の枠は1mV（10mm）の目盛り。</div>
+  <div class="cards" id="card-grid"></div>
+</div>
+
+<!-- ══ 12-LEAD MAP TAB ══ -->
+<div id="pane-lead12" class="pane">
+  <div class="legend">
+    <div class="leg"><div class="leg-box" style="background:#fde8e4;border:1px solid #b83222"></div>ST上昇（梗塞部位）。後壁梗塞の追加誘導V7〜V9、de Winter の V1〜V5（上向き傾斜のST低下＋高いT波）もこの枠</div>
+    <div class="leg"><div class="leg-box" style="background:#daeaff;border:1px solid #1a6fbf"></div>ST低下（鏡像・対側性変化）。T波は陰性が多いが、後壁梗塞では上向き</div>
+    <div class="leg"><div class="leg-box" style="background:#fffbf0;border:1px solid #9a6010"></div>軽度ST変化（副次的）</div>
+    <div class="leg"><div class="leg-box" style="background:#f3ecfb;border:1px solid #6c2fa0"></div>特徴的な波形（RSR'・幅広いS波など。ST上昇・低下とは別）</div>
+  </div>
+  <div class="lead-sel" id="lead-sel"></div>
+  <div class="l12-info" id="l12-info"></div>
+  <div class="grid-note">グリッド：25mm/秒・10mm/mV。小マス＝0.04秒・0.1mV、大マス（太線）＝0.2秒・0.5mV。</div>
+  <div class="l12-grid" id="l12-grid"></div>
+  <div id="l12-extra"></div>
+  <div class="finding" id="finding"></div>
+</div>
+
+<!-- ══ DIAGNOSIS TAB ══ -->
+<div id="pane-dx" class="pane">
+  <p class="intro-dx">各誘導で観察された所見ボタンを選択してください（複数選択可）。選択した所見の組み合わせから可能性のある疾患をリアルタイムで判定します。ST上昇とST低下、T波増高と陰性T波はそれぞれ排他選択です。</p>
+  <div id="leads-wrap-dx"></div>
+  <div class="sel-summary" id="sel-summary-dx">所見を選択してください</div>
+  <div class="result-box" id="result-box-dx">
+    <div class="result-empty">誘導の所見を選択すると診断候補が表示されます</div>
+  </div>
+<div style="height:1px;background:var(--border);margin:20px 0"></div>
+<p class="sec-lbl" style="margin-bottom:8px">参考：箱モデル（佐藤弘明）— 左室の壁と誘導の対応</p>
+<div class="box-two">
+  <div class="bpanel">
+    <svg viewBox="0 0 300 265" xmlns="http://www.w3.org/2000/svg">
+      <text x="150" y="14" text-anchor="middle" font-size="11" fill="#9a9690">左室断面（正面から）</text>
+      <rect x="55" y="24" width="190" height="195" rx="10" fill="#f7f5f0" stroke="#9a9690" stroke-width="0.5"/>
+      <rect x="55" y="24" width="190" height="42" fill="#daeaff"/><rect x="55" y="24" width="190" height="42" fill="none" stroke="#1a6fbf" stroke-width="0.5"/>
+      <text x="150" y="42" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="700" fill="#0a3f7f">前壁</text>
+      <text x="150" y="58" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#1a6fbf">V3・V4（+V1・V2 中隔）</text>
+      <rect x="55" y="177" width="190" height="42" fill="#d4edd8"/><rect x="55" y="177" width="190" height="42" fill="none" stroke="#2d7a3a" stroke-width="0.5"/>
+      <text x="150" y="195" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="700" fill="#1a4a22">下壁</text>
+      <text x="150" y="210" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#2d7a3a">Ⅱ・Ⅲ・aVF</text>
+      <rect x="55" y="66" width="48" height="111" fill="#fde8e4"/><rect x="55" y="66" width="48" height="111" fill="none" stroke="#b83222" stroke-width="0.5"/>
+      <text x="79" y="108" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#791f1f">心室</text>
+      <text x="79" y="123" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#791f1f">中隔</text>
+      <text x="79" y="145" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#b83222">V1・V2</text>
+      <rect x="197" y="66" width="48" height="111" fill="#e8e4fc"/><rect x="197" y="66" width="48" height="111" fill="none" stroke="#5540b0" stroke-width="0.5"/>
+      <text x="221" y="105" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#2e1e80">側壁</text>
+      <text x="221" y="121" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#5540b0">V5・V6</text>
+      <text x="221" y="136" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#5540b0">Ⅰ・aVL</text>
+      <rect x="103" y="66" width="94" height="111" fill="#fffdf5" stroke="#d0ccc4" stroke-width="0.5" stroke-dasharray="3,3"/>
+      <text x="150" y="117" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#9a9690">心腔</text>
+      <text x="150" y="252" text-anchor="middle" font-size="10" fill="#c0bbb5">※前後壁・後壁は省略</text>
+    </svg>
+    <div class="bleg">
+      <div class="blegi"><div class="bleg-dot" style="background:#daeaff;border:1px solid #1a6fbf"></div>前壁（V1〜V4）</div>
+      <div class="blegi"><div class="bleg-dot" style="background:#d4edd8;border:1px solid #2d7a3a"></div>下壁（Ⅱ・Ⅲ・aVF）</div>
+      <div class="blegi"><div class="bleg-dot" style="background:#fde8e4;border:1px solid #b83222"></div>心室中隔（V1・V2）</div>
+      <div class="blegi"><div class="bleg-dot" style="background:#e8e4fc;border:1px solid #5540b0"></div>側壁（Ⅰ・aVL・V5・V6）</div>
+    </div>
+  </div>
+  <div class="bpanel">
+    <svg viewBox="0 0 300 265" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="arw2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      <text x="150" y="14" text-anchor="middle" font-size="11" fill="#9a9690">肢誘導の「見る方向」</text>
+      <ellipse cx="150" cy="138" rx="68" ry="80" fill="#f7f5f0" stroke="#c0bbb5" stroke-width="0.5"/>
+      <ellipse cx="150" cy="138" rx="28" ry="30" fill="#fde8e4" stroke="#b83222" stroke-width="1"/>
+      <text x="150" y="134" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="700" fill="#791f1f">心臓</text>
+      <text x="150" y="150" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#b83222">左室</text>
+      <line x1="80" y1="138" x2="40" y2="138" stroke="#5540b0" stroke-width="1.5" marker-end="url(#arw2)"/>
+      <rect x="6" y="126" width="30" height="18" rx="4" fill="#e8e4fc"/>
+      <text x="21" y="135" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#2e1e80">Ⅰ</text>
+      <text x="50" y="126" font-size="10" fill="#5540b0">左方向</text>
+      <line x1="168" y1="158" x2="207" y2="197" stroke="#2d7a3a" stroke-width="1.5" marker-end="url(#arw2)"/>
+      <rect x="210" y="194" width="30" height="18" rx="4" fill="#d4edd8"/>
+      <text x="225" y="203" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#1a4a22">Ⅱ</text>
+      <text x="207" y="184" text-anchor="start" font-size="10" fill="#2d7a3a">左下</text>
+      <line x1="132" y1="160" x2="95" y2="198" stroke="#3d8a2d" stroke-width="1.5" marker-end="url(#arw2)"/>
+      <rect x="62" y="195" width="30" height="18" rx="4" fill="#d4edd8"/>
+      <text x="77" y="204" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#1a4a22">Ⅲ</text>
+      <text x="56" y="184" text-anchor="end" font-size="10" fill="#3d8a2d">右下</text>
+      <line x1="150" y1="168" x2="150" y2="223" stroke="#2d7a3a" stroke-width="1.5" marker-end="url(#arw2)"/>
+      <rect x="118" y="225" width="64" height="18" rx="4" fill="#d4edd8"/>
+      <text x="150" y="234" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#1a4a22">aVF（真下）</text>
+      <line x1="130" y1="116" x2="95" y2="74" stroke="#5540b0" stroke-width="1.2" marker-end="url(#arw2)" stroke-dasharray="4,2"/>
+      <rect x="60" y="58" width="66" height="18" rx="4" fill="#e8e4fc"/>
+      <text x="93" y="67" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#2e1e80">aVL（左上）</text>
+      <line x1="170" y1="116" x2="205" y2="74" stroke="#9a9690" stroke-width="1.2" marker-end="url(#arw2)" stroke-dasharray="4,2"/>
+      <rect x="174" y="58" width="66" height="18" rx="4" fill="#f0f0ee"/>
+      <text x="207" y="67" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#5a5854">aVR（右上）</text>
+      <text x="150" y="32" text-anchor="middle" font-size="10" fill="#c0bbb5">上（頭側）</text>
+      <text x="150" y="255" text-anchor="middle" font-size="10" fill="#c0bbb5">下（足側）</text>
+      <text x="10" y="142" font-size="10" fill="#c0bbb5">左</text>
+      <text x="278" y="142" font-size="10" fill="#c0bbb5">右</text>
+    </svg>
+    <div class="bleg">
+      <div class="blegi"><div class="bleg-dot" style="background:#e8e4fc;border:1px solid #5540b0"></div>Ⅰ・aVL → 側壁方向</div>
+      <div class="blegi"><div class="bleg-dot" style="background:#d4edd8;border:1px solid #2d7a3a"></div>Ⅱ・Ⅲ・aVF → 下壁方向</div>
+    </div>
+  </div>
+</div>
+<p class="sec-lbl" style="margin-top:14px">梗塞部位・誘導・責任血管 早見表</p>
+<div class="sum-grid">
+  <div class="sum-card" style="background:#daeaff"><div class="sum-title" style="color:#0a3f7f">前壁中隔梗塞</div><div class="sum-leads" style="color:#1a6fbf">V1・V2・V3・V4</div><div class="sum-vessel" style="color:#1a6fbf">LAD（左前下行枝）</div></div>
+  <div class="sum-card" style="background:#e8e4fc"><div class="sum-title" style="color:#2e1e80">側壁梗塞</div><div class="sum-leads" style="color:#5540b0">Ⅰ・aVL・V5・V6</div><div class="sum-vessel" style="color:#5540b0">LCX（左回旋枝）</div></div>
+  <div class="sum-card" style="background:#d4edd8"><div class="sum-title" style="color:#1a4a22">下壁梗塞</div><div class="sum-leads" style="color:#2d7a3a">Ⅱ・Ⅲ・aVF</div><div class="sum-vessel" style="color:#2d7a3a">RCA（右冠動脈）</div></div>
+</div>
+<div class="recip-wrap">
+  <div class="recip-title">鏡像変化（reciprocal change）— 梗塞部位を選択</div>
+  <div class="recip-btns">
+    <button class="recip-btn on" onclick="showRecip('inf',this)">下壁梗塞</button>
+    <button class="recip-btn" onclick="showRecip('ant',this)">前壁中隔梗塞</button>
+    <button class="recip-btn" onclick="showRecip('lat',this)">側壁梗塞</button>
+  </div>
+  <div class="recip-body">
+    <div id="recip-svg"></div>
+    <div id="recip-table" style="font-size:11px"></div>
+  </div>
+</div>
+<div class="note-box" style="margin-top:10px">
+  佐藤弘明の核心：「どの壁が虚血か」→「その壁に向いている誘導を探す」。下壁梗塞ではaVLに最強の鏡像ST低下が現れる。Ⅲ＞ⅡのST上昇はRCA近位部閉塞を示唆。後壁梗塞はV1〜V3のST低下・R波増高・上向きT波で気づく。
+</div>
+  <button class="reset-dx" onclick="resetDx()">すべてリセット</button>
+</div>
+
+<!-- ══ PROTOCOL CHECK TAB ══ -->
+<div id="pane-chk" class="pane on">
+  <div id="flow-app"></div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+function g(x,cx,s,h){return h*Math.exp(-0.5*((x-cx)/s)**2)}
+function beat(o={}){
+  const{ox=0,rr=64,p_h=2.0,p_neg=false,no_p=false,pr=14,qrs=8,q_depth=0.28,r_h=12,s_depth=2,r_neg=false,rsrp=false,m_wave=false,qs=false,abnq=false,delta=false,delta_neg=false,st=0,st_type='iso',t_h=4,t_w=20,saw_f=false,noise=0}=o;
+  const pts=[],qtLen=Math.round(rr*.54),stLen=Math.max(qtLen-qrs-t_w,4);
+  for(let i=0;i<rr;i++){
+    let y=0;const x=ox+i;
+    if(noise>0){y=(Math.sin(i*.41)*noise+Math.sin(i*.73)*noise*.7+Math.sin(i*1.31)*noise*.4+Math.random()*noise*.2)*Math.min(1,i/6)*Math.min(1,(rr-i)/6);pts.push([x,y]);continue;}
+    if(saw_f){const fc=rr/4,ph=i%fc;y+=ph<fc*.7?-(ph/(fc*.7))*2.2:2.2*(1-(ph-fc*.7)/(fc*.3));}
+    if(!no_p&&!saw_f){const pv=g(i,7,3.2,p_h);y+=p_neg?-pv:pv;}
+    else if(!saw_f&&no_p){y+=Math.sin(i*1.6)*.35+Math.sin(i*2.9)*.2+Math.sin(i*4.2)*.12;}
+    const qS=pr,qE=pr+qrs;
+    if(i>=qS&&i<qE){
+      const qi=i-qS;
+      if(qs){y-=g(qi,qrs*.50,qrs*.30,Math.abs(r_h)*1.08);y-=g(qi,qrs*.50,qrs*.15,Math.abs(r_h)*.35);}
+      else if(r_neg){y-=g(qi,qrs*.5,qrs*.18,Math.abs(r_h));y+=g(qi,qrs*.1,qrs*.05,Math.abs(r_h)*.1);}
+      else if(rsrp){y+=g(qi,qrs*.12,qrs*.10,7);y-=g(qi,qrs*.34,qrs*.10,9);y+=g(qi,qrs*.64,qrs*.14,13);y-=g(qi,qrs*.90,qrs*.08,4);}
+      else if(m_wave){y+=g(qi,qrs*.26,qrs*.12,9)+g(qi,qrs*.66,qrs*.13,13);y-=g(qi,qrs*.46,qrs*.07,3.5);}
+      else{
+        if(abnq)y-=g(qi,qrs*.18,qrs*.2,Math.max(q_depth,r_h*.33));else y-=g(qi,qrs*.08,qrs*.055,q_depth);
+        y+=g(qi,qrs*.42,qrs*.15,r_h);
+        if(delta){y+=g(qi,qrs*.2,qrs*.15,r_h*.3);}
+        if(delta_neg){y-=g(qi,qrs*.2,qrs*.15,r_h*.3);}
+        y-=g(qi,qrs*.72,qrs*.060,s_depth);
+      }
+    }
+    if(st_type==='rise'&&i>=qE-3&&i<qE){y+=Math.abs(st)*(i-(qE-4))/4;}
+    if((st_type==='depress'||st_type==='depress_inv'||st_type==='depress_h'||st_type==='mild_dep')&&i>=qE-3&&i<qE){const lvl=(st_type==='mild_dep'?.5:1)*Math.abs(st);y-=lvl*(i-(qE-4))/4;}
+    const stS=qE,stE=stS+stLen,tE=stE+t_w;
+    if(i>=stS&&i<tE){
+      const si=i-stS;const ti=Math.max(0,i-stE);
+      if(st_type==='rise'){if(i<stE){const sf=si/stLen;y+=Math.abs(st)*(1-sf*.10);}else{y+=Math.abs(st)*.65*Math.max(0,1-ti/t_w)+g(ti,t_w*.5,t_w*.27,Math.abs(t_h));}}
+      else if(st_type==='depress'){
+        {
+          const tPeak=0.50,tSig=0.21;
+          const tw0=Math.abs(t_h)*Math.exp(-0.5*Math.pow((0-t_w*tPeak)/(t_w*tSig),2));
+          if(i<stE){const sf=si/stLen;y+=-Math.abs(st)+sf*(Math.abs(st)-tw0);}
+          else{const base=-tw0*Math.max(0,1-ti/t_w);y+=base+Math.abs(t_h)*Math.exp(-0.5*Math.pow((ti-t_w*tPeak)/(t_w*tSig),2));}
+        }}
+      else if(st_type==='depress_h'){if(i<stE){const sf=si/stLen;y+=-Math.abs(st)*(1+sf*.1);}else{y+=-Math.abs(st)*Math.max(0,1-ti/(t_w*.5))+g(ti,t_w*.5,t_w*.19,Math.abs(t_h));}}
+      else if(st_type==='depress_inv'){if(i<stE){const sf=si/stLen;y+=-Math.abs(st)*(1-sf*.6);}else{y+=-Math.abs(st)*.4*Math.max(0,1-ti/(t_w*.8))-g(ti,t_w*.45,t_w*.2,Math.abs(t_h)*.7);}}
+      else if(st_type==='coronary_t'){if(i>=stE){y-=g(ti,t_w*.5,t_w*.26,Math.abs(t_h));}}
+      else if(st_type==='mild_dep'){
+        {
+          const tPeak=0.50,tSig=0.21;
+          const tw0=Math.abs(t_h)*0.55*Math.exp(-0.5*Math.pow((0-t_w*tPeak)/(t_w*tSig),2));
+          if(i<stE){const sf=si/stLen;y+=-Math.abs(st)*0.5+sf*(Math.abs(st)*0.5-tw0);}
+          else{const base=-tw0*Math.max(0,1-ti/t_w);y+=base+Math.abs(t_h)*0.55*Math.exp(-0.5*Math.pow((ti-t_w*tPeak)/(t_w*tSig),2));}
+        }}
+      else{if(i>=stE){y+=g(ti,t_w*.56,t_w*.26,t_h);}}
+    }
+    pts.push([x,y]);
+  }
+  return pts;
+}
+function strip(fn,W,n=3){const pts=[];for(let b=0;b<n;b++)pts.push(...fn(b*Math.floor(W/n)));if(pts.length&&pts[pts.length-1][0]<W)pts.push([W,0]);return pts;}
+function chbStrip(W){
+  const pP=[],qP=[];const pRR=60,qRR=140;
+  for(let b=0;b<Math.ceil(W/pRR)+1;b++){const ox=b*pRR;for(let i=0;i<pRR;i++){const x=ox+i;if(x>=W)break;pP.push([x,g(i,pRR*.38,pRR*.16,2.6)]);}}
+  for(let b=0;b<Math.ceil(W/qRR)+1;b++){const ox=b*qRR+12;for(let i=0;i<qRR;i++){const x=ox+i;if(x>=W)break;let y=0;if(i>=2&&i<16){const qi=i-2;y=-g(qi,1,.8,.8)+g(qi,5,2.2,14)-g(qi,9.5,1.6,4);}if(i>=18&&i<36)y=g(i-18,9,6,4);qP.push([x,y]);}}
+  return{p:pP,q:qP};
+}
+function render(pts,W,H,opts={}){
+  const{wc='#1a1a18',ex=null,exColor='#E8A000',sw=1.6}=opts;
+  const pad={l:5,r:4,t:8,b:4},gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  const all=ex?[...pts,...ex]:pts,ys=all.map(p=>p[1]);
+  const minY=Math.min(...ys,-2.5),maxY=Math.max(...ys,2.5);
+  const scY=(gH*.76)/Math.max(maxY-minY,9),midY=(minY+maxY)/2;
+  const xs=pts.map(p=>p[0]),minX=Math.min(...xs),maxX=Math.max(...xs),scX=gW/Math.max(maxX-minX,1);
+  const tx=x=>(pad.l+(x-minX)*scX).toFixed(1),ty=y=>(pad.t+gH/2-(y-midY)*scY).toFixed(1);
+  let gr='';
+  // 25mm/秒・10mm/mV：1単位=10ms=0.1mV。横は4単位(0.04秒)=小マス、20単位(0.2秒)=大マス。縦は1単位=小マス、5単位=大マス
+  for(let k=0;minX+k*4<=maxX+0.01;k++){const gx=tx(minX+k*4);gr+=`<line x1="${gx}" y1="${pad.t}" x2="${gx}" y2="${H-pad.b}" stroke="#f0c8a0" stroke-width="${k%5===0?.8:.22}"/>`;}
+  const yHi=midY+(gH/2)/scY,yLo=midY-(gH/2)/scY;
+  for(let k=Math.ceil(yLo);k<=Math.floor(yHi);k++){const gy=ty(k);gr+=`<line x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}" stroke="#f0c8a0" stroke-width="${k%5===0?.8:.22}"/>`;}
+  const bl=(pad.t+gH/2-(-midY)*scY).toFixed(1);
+  gr+=`<line x1="${pad.l}" y1="${bl}" x2="${W-pad.r}" y2="${bl}" stroke="#e8b490" stroke-width=".6" stroke-dasharray="3,3"/>`;
+  const cT=(pad.t+gH/2-5*scY).toFixed(1),cB=(pad.t+gH/2+5*scY).toFixed(1);
+  gr+=`<polyline points="${pad.l},${cB} ${pad.l},${cT} ${(pad.l+3.2)},${cT} ${(pad.l+3.2)},${cB}" fill="none" stroke="#c8a060" stroke-width=".6"/>`;
+  const mD=pts.map((p,i)=>`${i===0?'M':'L'}${tx(p[0])} ${ty(p[1])}`).join(' ');
+  let exSvg='';
+  if(ex){const d=ex.map((p,i)=>`${i===0?'M':'L'}${tx(p[0])} ${ty(p[1])}`).join(' ');exSvg=`<path d="${d}" fill="none" stroke="${exColor}" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="4,2"/>`;}
+  return`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><rect width="${W}" height="${H}" fill="#fffdf5"/>${gr}${exSvg}<path d="${mD}" fill="none" stroke="${wc}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function renderMini(pts,W,H,hl=false,hl2=false,hl3=false,hl4=false){
+  if(!pts||!pts.length)return'';
+  const pad={l:3,r:3,t:3,b:3},gW=W-pad.l-pad.r,gH=H-pad.t-pad.b;
+  const ys=pts.map(p=>p[1]),minY=Math.min(...ys,-2),maxY=Math.max(...ys,2);
+  const scY=(gH*.76)/Math.max(maxY-minY,8),midY=(minY+maxY)/2;
+  const xs=pts.map(p=>p[0]),minX=Math.min(...xs),maxX=Math.max(...xs),scX=gW/Math.max(maxX-minX,1);
+  const tx=x=>(pad.l+(x-minX)*scX).toFixed(1),ty=y=>(pad.t+gH/2-(y-midY)*scY).toFixed(1);
+  let gr='';
+  for(let k=0;minX+k*4<=maxX+0.01;k++){const gx=tx(minX+k*4);gr+=`<line x1="${gx}" y1="${pad.t}" x2="${gx}" y2="${H-pad.b}" stroke="#f0c8a0" stroke-width="${k%5===0?.6:.12}"/>`;}
+  const yHi=midY+(gH/2)/scY,yLo=midY-(gH/2)/scY;
+  for(let k=Math.ceil(yLo);k<=Math.floor(yHi);k++){const gy=ty(k);gr+=`<line x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}" stroke="#f0c8a0" stroke-width="${k%5===0?.6:.12}"/>`;}
+  const bl=ty(0);
+  gr+=`<line x1="${pad.l}" y1="${bl}" x2="${W-pad.r}" y2="${bl}" stroke="#e8b490" stroke-width=".45" stroke-dasharray="2,3"/>`;
+  const d=pts.map((p,i)=>`${i===0?'M':'L'}${tx(p[0])} ${ty(p[1])}`).join(' ');
+  const wc=hl?'#b83222':hl2?'#1a6fbf':hl3?'#9a6010':hl4?'#6c2fa0':'#1a1a18';
+  return`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><rect width="${W}" height="${H}" fill="#fffdf5"/>${gr}<path d="${d}" fill="none" stroke="${wc}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+const CW=276,CH=86,RR=68;
+function mkS(fn){return strip(ox=>fn(ox),CW,3);}
+
+const diseases=[
+  {id:'nsr',cat:'other',name:'正常洞調律',sub:'NSR — R波増高パターン・aVR全波形逆転',tag:'正常',tagC:'#d4edd8',tagT:'#1a4a22',lbls:[],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.5,r_h:15,s_depth:2,t_h:5.5,st_type:'iso'})),details:[['心拍数','60〜100 bpm（大マス3〜5個=1RR・25mm/秒）'],['P波','正立・丸形。高さ≤2.5mm、幅≤110ms'],['R波増高','V1(rS)→V2→V3(移行帯)→V4→V5(R最大)→V6'],['V2〜V3のQ波','原則なし。あれば梗塞を示唆（V1のQSは正常でもみられる）'],['aVR','P・QRS・T波すべて逆転（正常のaVRの特徴）']]},
+  {id:'stemi_ant',cat:'ischemia',name:'急性前壁中隔梗塞',sub:'STEMI — V1〜V4 QS型+tombstone ST上昇',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'ST上昇V1〜V4',c:'#fde8e4',tc:'#791f1f'},{t:'LAD閉塞',c:'#fde8e4',tc:'#791f1f'},{t:'鏡像:Ⅱ・Ⅲ・aVF',c:'#daeaff',tc:'#0a3f7f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2,r_h:10,s_depth:1,t_h:6.3,st:5,st_type:'rise',q_depth:0,qs:true,qrs:9,t_w:22})),details:[['診断基準','V2〜V3≥2mm (男性40歳以上)、他誘導≥1mm、隣接2誘導以上'],['V1〜V3','QS型（R波完全消失）+ 大きなST上昇（tombstone型）'],['鏡像変化','Ⅱ・Ⅲ・aVFに対側性ST低下（近位LAD閉塞で多い：1mm以上の低下は近位約8割・遠位約2割。必発ではない）。T波は陰性が多いが陽性もある'],['aVR','ST上昇→広範囲梗塞・左主幹部病変を示唆'],['対応','Primary PCI。Door-to-balloon 90分以内']]},
+  {id:'stemi_inf',cat:'ischemia',name:'急性下壁梗塞',sub:'STEMI — Ⅱ・Ⅲ・aVF ST上昇 / Ⅲ>Ⅱ',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'ST上昇Ⅱ・Ⅲ・aVF',c:'#fde8e4',tc:'#791f1f'},{t:'RCA閉塞',c:'#fde8e4',tc:'#791f1f'},{t:'aVL最強鏡像',c:'#daeaff',tc:'#0a3f7f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.2,r_h:15,s_depth:0.2,q_depth:1.2,t_h:5.7,st:4,st_type:'rise',abnq:true,t_w:22})),details:[['Ⅲ＞ⅡのST上昇','RCA近位部閉塞を示唆（Ⅱ>ⅢならLCXを疑う）'],['aVL','最強の鏡像ST低下＋深い陰性T波（下壁梗塞の確実な指標）'],['右室梗塞','下壁梗塞の約3〜4割に合併（診断法・対象で頻度は変わる）。V4R誘導ST上昇で確認。ニトロ禁忌'],['V2〜V5の軽度ST低下','後壁関与の可能性→V7〜V9追加誘導を検討'],['症状','嘔吐・徐脈はBezold-Jarisch反射（迷走神経）による']]},
+  {id:'stemi_lat',cat:'ischemia',name:'急性側壁梗塞',sub:'STEMI — Ⅰ・aVL・V5・V6 ST上昇（ST変化が軽微・見落とし注意）',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'ST上昇≤1mm（見落とし注意）',c:'#fde8e4',tc:'#791f1f'},{t:'LCX鈍角枝',c:'#fde8e4',tc:'#791f1f'},{t:'鏡像:Ⅲ・aVF',c:'#daeaff',tc:'#0a3f7f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:1.4,r_h:8,s_depth:3,q_depth:.3,t_h:3.8,st:1,st_type:'rise',t_w:21})),details:[['ST変化の特徴','Ⅰ・aVLのST上昇は≤1mmのことが多い。見落とし禁止'],['対象誘導','Ⅰ・aVL・V5・V6（側壁）。V1〜V4は通常変化なし（後壁の関与でV1〜V3にST低下を伴うこともある）'],['責任血管','LCX鈍角枝（OM枝）閉塞'],['鏡像変化','Ⅲ・aVFにST低下＋陰性T波（陽性のこともある）。aVRは軽度ST低下'],['診断のコツ','「Ⅲ・aVFのST低下」から逆算してⅠ・aVLを再確認する']]},
+  {id:'posterior',cat:'ischemia',name:'後壁梗塞',sub:'V1〜V4 水平型ST低下（V2・V3最大）＋高いR波＋上向きT波（後壁ST上昇の鏡像・見落とし禁止）',tag:'梗塞',tagC:'#fffbf0',tagT:'#5a3800',lbls:[{t:'V1〜V4 水平型ST低下',c:'#daeaff',tc:'#0a3f7f'},{t:'上向きT波（高い）',c:'#daeaff',tc:'#0a3f7f'},{t:'V7〜V9追加',c:'#fffbf0',tc:'#5a3800'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:1.8,r_h:14,s_depth:4.5,q_depth:0,t_h:8,st:2.5,st_type:'depress_h',t_w:19})),details:[['波形の核心','V1〜V4：水平型ST低下（V2・V3最大）＋V1・V2の高いR波（R/S＞1）＋上向きT波。ST低下は後壁ST上昇の、高いR波は後壁Q波の、上向きT波は後壁の陰性T波の鏡像。R波・T波の変化は急性早期にはまだ目立たないこともある'],['鑑別のポイント','ST低下に高い上向きT波が続く場合は後壁梗塞を疑う（非特異的）。上向き傾斜のST低下だけでは典型的ではない。T波が陰性の場合はNSTEMIなど他の虚血も考える'],['診断','V7〜V9追加誘導でST上昇≥0.5mmを確認（40歳未満の男性は≥1mm）'],['責任血管','LCX（左回旋枝）またはRCA（右冠動脈）後下行枝']]},
+  {id:'stemi_ant_lat',cat:'ischemia',name:'前壁・高位側壁梗塞',sub:'STEMI — V2〜V6＋Ⅰ・aVL ST上昇（LAD近位部）',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'V2〜V6＋Ⅰ・aVL上昇',c:'#fde8e4',tc:'#791f1f'},{t:'LAD近位部',c:'#fde8e4',tc:'#791f1f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2,r_h:8,s_depth:2,t_h:12,st:10,st_type:'rise',q_depth:0,qrs:9,t_w:22})),details:[['特徴','V2〜V6のST上昇に加えてⅠ・aVLにもST上昇（高位側壁関与）'],['aVR','ST上昇→LAD近位部閉塞・左主幹部病変を強く示唆'],['責任血管','LAD（第1対角枝分岐前の近位部閉塞）']]},
+  {id:'nstemi',cat:'ischemia',name:'NSTEMI（非ST上昇型急性心筋梗塞）',sub:'ST低下＋正立T波 — 心内膜下虚血・トロポニン上昇',tag:'高緊急',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'ST低下＋正立T波',c:'#daeaff',tc:'#0a3f7f'},{t:'トロポニン上昇',c:'#fde8e4',tc:'#791f1f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.2,r_h:14,s_depth:2,t_h:7,st:6,st_type:'depress',t_w:20})),details:[['定義','ST上昇なし＋トロポニン上昇→NSTEMI'],['ST変化','水平型・下降型ST低下≥0.5mm（J点後80ms計測）'],['T波','ST低下後のT波は正立（上向き）★重要']]},
+  {id:'coronary_t',cat:'ischemia',name:'冠性T波（陰性T波）',sub:'発症1週間以上 — 深く対称的な陰性T波',tag:'梗塞慢性期',tagC:'#e8e4fc',tagT:'#2e1e80',lbls:[{t:'深い対称性陰性T波',c:'#e8e4fc',tc:'#2e1e80'},{t:'ST等電位',c:'#e8e4fc',tc:'#2e1e80'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2,r_h:9,s_depth:1,t_h:10,st_type:'coronary_t',abnq:true,t_w:24})),details:[['特徴','ST上昇が消失し等電位に戻った後、深く対称的な陰性T波が出現'],['時期','発症1週間以上'],['鑑別','「ST低下＋正立T波」（急性期）vs「ST等電位＋陰性T波」（慢性期）']]},
+  {id:'hyperacute',cat:'ischemia',name:'超急性期T波（Hyperacute T）',sub:'梗塞30分以内 — tall T波（見逃し禁止）',tag:'梗塞早期',tagC:'#fffbf0',tagT:'#5a3800',lbls:[{t:'tall T波',c:'#fffbf0',tc:'#5a3800'},{t:'見逃し禁止',c:'#fde8e4',tc:'#791f1f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.2,r_h:11,s_depth:1,t_h:20,st:2,st_type:'rise',t_w:24})),details:[['定義','胸部誘導T波≥1mV（10mm）またはR波の1/2以上（幅広・対称性）'],['タイミング','梗塞30分以内。ST上昇前の最初の変化'],['救急対応','胸痛があれば初回ECG正常でも10分後に再記録']]},
+
+  {id:'dewinter',cat:'ischemia',name:'de Winter ST/T wave complex',sub:'LAD近位部閉塞 — upsloping ST低下＋高い対称性T波（STEMI等価病変）',
+   tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',
+   lbls:[{t:'upsloping ST低下',c:'#daeaff',tc:'#0a3f7f'},{t:'高い対称性T波',c:'#fde8e4',tc:'#791f1f'},{t:'STEMI等価',c:'#fde8e4',tc:'#791f1f'}],
+   gen:()=>{
+     const rr=RR;
+     return mkS(ox=>{
+       const pts=[];
+       for(let i=0;i<rr;i++){
+         let y=0; const x=ox+i;
+         y+=g(i,7,3.2,2.2);
+         const pr=14,qrs=8,qS=pr,qE=pr+qrs;
+         if(i>=qS&&i<qE){
+           const qi=i-qS;
+           y-=g(qi,qrs*.08,qrs*.055,0.5);
+           y+=g(qi,qrs*.42,qrs*.15,11);
+           y-=g(qi,qrs*.72,qrs*.060,3.5);
+         }
+         const stS=qE,t_w=24,stLen=8,tE=stS+stLen+t_w;
+         if(i>=stS&&i<tE){
+           const si=i-stS;
+           const ti=Math.max(0,i-(stS+stLen));
+           if(i<stS+stLen){
+             const sf=Math.max(0,Math.min(1,si/stLen));
+             y-=3.5*(1-sf);
+           } else {
+             const tProgress=Math.max(0,1-ti/t_w);
+             const base=-3.5*Math.pow(tProgress,2)*0.08;
+             y+=base+g(ti,t_w*.48,t_w*.22,17);
+           }
+         }
+         pts.push([x,y]);
+       }
+       return pts;
+     });
+   },
+   details:[['定義','1〜3mmのupsloping型ST低下＋左右対称の高いT波（V1〜V6）。aVR ST上昇を伴う'],['責任血管','LAD近位部（前下行枝近位部）閉塞。STEMIと同等の緊急対応が必要'],['超急性期T波との違い','超急性期T波：ST上昇あり / de Winter：ST低下（J点が下がりながらT波へ上昇）'],['見落とし注意','ST上昇がないためSTEMIと認識されにくい。LADのprimary PCI例の約2%に出現（Verouden 2009）'],['救急対応','即時カテーテル室への搬送。Door-to-balloon 90分以内を目標'],['aVR所見','aVR ST上昇を伴う（LAD近位部閉塞の指標）']]},
+  {id:'vf',cat:'arrhythmia',name:'心室細動（VF）',sub:'除細動適応 — P・QRS・T波消失・不規則な粗大振動',tag:'心停止',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'即時除細動',c:'#fde8e4',tc:'#791f1f'},{t:'P/QRS/T消失',c:'#fde8e4',tc:'#791f1f'}],gen:()=>{const pts=[];const W=CW;for(let x=0;x<W;x++){const mod=1+Math.sin(x*0.09)*0.3+Math.sin(x*0.047+1)*0.2;const f2=Math.sin(x*0.67+1.2)*2.5;const f3=Math.sin(x*0.43+0.7)*1.8;const phase=Math.sin(x*0.021)*0.9+Math.sin(x*0.053)*0.5;const y=(Math.sin(x*0.31+phase)*13)*mod+f2+f3;pts.push([x,y]);}return pts;},details:[['特徴','Coarse VF（粗大型）：不規則で無秩序な粗い振動・P/QRS/T完全消失（心拍数は算定できない）'],['脈拍','なし（心停止状態）'],['対応','即時除細動（360J非同期）＋高質CPR']]},
+  {id:'vt',cat:'arrhythmia',name:'心室頻拍（VT）',sub:'幅広QRS頻拍 180〜200bpm・単形性・RR規則的',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',lbls:[{t:'QRS幅広・単形性',c:'#fde8e4',tc:'#791f1f'},{t:'RR規則的',c:'#fde8e4',tc:'#791f1f'}],gen:()=>{const pts=[];const P=32;for(let x=0;x<CW;x++){const i=((x%P)+P)%P;const y=g(i,9,3.2,14)-g(i,15,2.6,5)+g(i,24,5,-9)+g(i,28,3,3);pts.push([x,y]);}return pts;},details:[['特徴','幅広いQRSが規則的に連続（≥120ms）・心拍数約190bpm・P波と無関係（房室解離）'],['鑑別','器質的心疾患（既往心筋梗塞等）があればほぼVT'],['対応','不安定→即時除細動（同期）/ 安定→アミオダロン']]},
+  {id:'af',cat:'arrhythmia',name:'心房細動（Af）',sub:'P波消失・f波・RR絶対不整',tag:'不整脈',tagC:'#fffbf0',tagT:'#5a3800',lbls:[{t:'P波消失',c:'#fffbf0',tc:'#5a3800'},{t:'RR絶対不整',c:'#fffbf0',tc:'#5a3800'}],gen:()=>{const pts=[];const qt=[24,52,98,121,190,222,264];for(let x=0;x<CW;x++){const nr=qt.find(q=>Math.abs(x-q)<7);if(nr!==undefined){const qi=x-nr+7;if(qi>=0&&qi<14){let y=g(qi,4.5,1.7,16)+g(qi,8,1.3,-4);if(qi>=9&&qi<14)y+=g(qi-9,2.5,2,3.5);pts.push([x,y]);}}else{pts.push([x,Math.sin(x*1.8)*.45+Math.sin(x*3.1)*.28+Math.sin(x*5.7)*.15]);}}pts.sort((a,b)=>a[0]-b[0]);return pts;},details:[['P波','消失→微細なf波（350〜600/分）'],['RR間隔','絶対不整（Afの最大の特徴）'],['報告例','「心拍数170、QRS幅狭い、RR絶対不整、P波なし、Af疑い」']]},
+  {id:'afl',cat:'arrhythmia',name:'心房粗動（AFL）',sub:'鋸歯状F波300/分・2:1伝導→150bpm・RR規則的',tag:'不整脈',tagC:'#fffbf0',tagT:'#5a3800',lbls:[{t:'F波300/分（鋸歯状）',c:'#fffbf0',tc:'#5a3800'},{t:'2:1伝導→150bpm',c:'#fffbf0',tc:'#5a3800'}],gen:()=>{const pts=[];const W=CW;const fCyc=20;const qrsPos=[18,58,98,138,178,218,258];for(let x=0;x<W;x++){const fPhase=(x%fCyc)/fCyc;let y=fPhase<0.35?-fPhase/0.35*5:(-1+fPhase/0.65)*5;const nearQRS=qrsPos.find(q=>Math.abs(x-q)<9);if(nearQRS!==undefined){const qi=x-nearQRS+9;if(qi>=0&&qi<18){y+=g(qi,3,1.2,-3)+g(qi,6,1.8,18)+g(qi,9.5,1.4,-6);}}pts.push([x,y]);}return pts;},details:[['特徴','鋸歯状F波（急峻下降→緩やか上昇）・2:1伝導・心拍数150bpm・RR規則的'],['落とし穴','150bpmの規則的頻拍は必ずAFLを考慮'],['治療','電気的除細動（50〜100J）・カテーテルアブレーション']]},
+  {id:'lbbb',cat:'block',name:'完全左脚ブロック（LBBB）',sub:'QRS≥120ms・M型R波(V5/V6)・新規=梗塞相当',tag:'ブロック',tagC:'#daeaff',tagT:'#0a3f7f',lbls:[{t:'QRS≥120ms',c:'#daeaff',tc:'#0a3f7f'},{t:'新規=梗塞相当',c:'#daeaff',tc:'#0a3f7f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.2,pr:16,qrs:17,m_wave:true,r_h:0,t_h:8,st:3,st_type:'depress_inv'})),details:[['V5・V6','幅広くノッチのあるM型R波（LBBB最大の特徴）'],['V1〜V3','QS波＋ST上昇（discordant：正常の2次変化）'],['救急意義','新規（または新規疑い）LBBBは急性梗塞として対応']]},
+  {id:'rbbb',cat:'block',name:'完全右脚ブロック（RBBB）',sub:"QRS≥120ms・RSR'型（V1）・S波幅広（Ⅰ・V5・V6）",tag:'ブロック',tagC:'#daeaff',tagT:'#0a3f7f',lbls:[{t:'QRS≥120ms',c:'#daeaff',tc:'#0a3f7f'},{t:"RSR'（うさぎ耳）",c:'#daeaff',tc:'#0a3f7f'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.0,pr:16,qrs:15,rsrp:true,t_h:5.5,st:2.5,st_type:'depress_inv'})),details:[['V1〜V2',"RSR'型（うさぎ耳型）＋ST低下＋陰性T波（終末R'波と逆向きの二次性変化）"],['新規発症','肺塞栓（S1Q3T3）・右室負荷・右室梗塞を考慮']]},
+  {id:'chb',cat:'block',name:'完全房室ブロック（3度AVB）',sub:'P波とQRS波が完全解離・P rate > QRS rate・幅広補充調律',tag:'要ペーシング',tagC:'#fffbf0',tagT:'#5a3800',lbls:[{t:'P-QRS完全解離',c:'#fffbf0',tc:'#5a3800'}],gen:()=>{const r=chbStrip(CW);return r.q;},pWave:()=>{const r=chbStrip(CW);return r.p;},details:[['特徴','P波約85〜100/分・QRS約35〜45/分。P波rateはQRS rateより必ず早い（図は表示幅の都合でP約100/分・QRS約43/分）'],['QRS','幅広補充調律（ヒス束下起源・30〜50/分）'],['対応','経皮→経静脈一時ペーシング→永久ペースメーカ']]},
+  {id:'wpw_a',cat:'other',name:'WPW症候群 A型',sub:'ケント束が左房〜左室 / V1でデルタ波上向き・R波優位',tag:'副伝導路',tagC:'#e8e4fc',tagT:'#2e1e80',lbls:[{t:'デルタ波（上向き）',c:'#e8e4fc',tc:'#2e1e80'},{t:'PQ≤120ms',c:'#e8e4fc',tc:'#2e1e80'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.2,pr:10,qrs:14,r_h:16,s_depth:3,t_h:5.5,delta:true,st_type:'iso'})),details:[['A型の特徴','ケント束が左房〜左室。V1でデルタ波が上向き→R波優位'],['最大危険','Af合併→副伝導路を高速伝導→VF移行→突然死'],['禁忌','WPW-AfへのVerapamil・Digitalis・β遮断薬（VF誘発）']]},
+  {id:'wpw_b',cat:'other',name:'WPW症候群 B型',sub:'ケント束が右房〜右室 / V1でデルタ波下向き・S波優位（QS型）',tag:'副伝導路',tagC:'#e8e4fc',tagT:'#2e1e80',lbls:[{t:'デルタ波（下向き）',c:'#e8e4fc',tc:'#2e1e80'},{t:'PQ≤120ms',c:'#e8e4fc',tc:'#2e1e80'}],gen:()=>mkS(ox=>beat({ox,rr:RR,p_h:2.2,pr:10,qrs:14,r_h:6,s_depth:14,t_h:5.5,delta_neg:true,st_type:'iso'})),details:[['B型の特徴','ケント束が右房〜右室。V1でデルタ波が下向き→QS型'],['A型との鑑別','V1のデルタ波の向き：A型=上向き（R優位）/ B型=下向き（QS型）']]},
+  {id:'hyperk',cat:'other',name:'高カリウム血症',sub:'テント状T波・P波消失・QRS幅広・徐脈（K=7.8の実波形）',tag:'電解質異常',tagC:'#fffbf0',tagT:'#5a3800',lbls:[{t:'テント状T波',c:'#fffbf0',tc:'#5a3800'},{t:'P波消失',c:'#fde8e4',tc:'#791f1f'},{t:'著明な徐脈',c:'#fde8e4',tc:'#791f1f'}],gen:()=>{const slowRR=120;return strip(ox=>{const pts=[];for(let i=0;i<slowRR;i++){let y=0;const x=ox+i;if(i>=16&&i<34){const qi=i-16;y-=g(qi,1,0.8,0.8);y+=g(qi,5,2.8,12);y-=g(qi,11,2.2,5);}if(i>=34&&i<46){y+=1.5*(1-(i-34)/12);}if(i>=46&&i<72){const ti=i-46;y+=g(ti,13,4.8,18);}pts.push([x,y]);}return pts;},CW,2);},details:[['実波形（K=7.8mEq/L）','心拍数24/分の著明な徐脈（図は表示幅の都合で約50/分に圧縮）。P波消失。幅広QRS。テント状T波'],['テント状T波','高く先鋭・左右対称。高K血症の最初の変化'],['対応','Ca静注（心筋保護・即効）→NaHCO3→インスリン+GS→透析']]},
+];
+
+const LW=130,LH=52;
+function mkL(o){return strip(ox=>beat({ox,rr:64,...o}),LW,2);}
+const NSR={'Ⅰ':mkL({p_h:1.8,r_h:8,s_depth:1.2,t_h:3.5,q_depth:.3}),'Ⅱ':mkL({p_h:2.8,r_h:15,s_depth:0.4,t_h:5.5,q_depth:.4}),'Ⅲ':mkL({p_h:1.2,r_h:5,s_depth:2.8,t_h:2.0,q_depth:.2}),'aVR':mkL({p_h:2.0,p_neg:true,r_neg:true,r_h:10,t_h:-3.5,q_depth:0}),'aVL':mkL({p_h:1.0,r_h:3.5,s_depth:4.0,t_h:1.5,q_depth:.2}),'aVF':mkL({p_h:2.2,r_h:11,s_depth:0.8,t_h:5.0,q_depth:.4}),'V1':mkL({p_h:1.0,r_h:2.5,s_depth:9.5,t_h:1.5,q_depth:0,st:.4,st_type:'depress',t_w:16}),'V2':mkL({p_h:1.3,r_h:5,s_depth:11.5,t_h:3.5,q_depth:0}),'V3':mkL({p_h:1.6,r_h:9,s_depth:9.5,t_h:4.5,q_depth:0}),'V4':mkL({p_h:1.9,r_h:17,s_depth:4.5,t_h:6.5,q_depth:.2}),'V5':mkL({p_h:1.7,r_h:19,s_depth:1.5,t_h:6.0,q_depth:.3}),'V6':mkL({p_h:1.7,r_h:13,s_depth:0.5,t_h:4.5,q_depth:.3})};
+const lead12DB={
+  nsr:{label:'正常洞調律',tag:'正常',tagC:'#d4edd8',tagT:'#1a4a22',info:'全誘導でP-QRS-T正常。RR規則的（60〜100bpm）。aVRは全波形逆転（正常）。',finding:'【正常R波増高パターン】V1(r=2.5,S=9mm・rS型)→V2→V3(移行帯)→V4(R>S)→V5(R最大=19mm)→V6(R=13mm)。',hl:[],hl2:[],hl3:[],leads:NSR},
+  dewinter:{
+    label:'de Winter complex',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',
+    info:'LAD近位部閉塞。V1〜V6でupsloping型ST低下（J点最低→T波へ上昇）＋左右対称の高いT波。aVR ST上昇。STEMIと同等の緊急対応が必要。LADのprimary PCI例の約2%に出現（Verouden 2009）。',
+    finding:'【実波形（赤枠：V1〜V5）】V3〜V4が最典型。J点から上昇型ST低下→高く左右対称のT波。ST上昇がないためSTEMIと見誤りやすい。aVR（赤枠）のST上昇がLAD近位部閉塞の確認指標。',
+    hl:['V1','V2','V3','V4','V5','aVR'],hl2:[],hl3:[],
+    leads:{
+      'Ⅰ': mkL({p_h:1.6,r_h:7,s_depth:1.5,t_h:3}),
+      'Ⅱ': mkL({p_h:2.2,r_h:10,s_depth:0.8,t_h:4.5}),
+      'Ⅲ': mkL({p_h:1.2,r_h:4,s_depth:2,t_h:2}),
+      'aVR':mkL({p_h:1.5,p_neg:true,r_neg:true,r_h:8,t_h:3,st:2,st_type:'rise',t_w:16}),
+      'aVL':mkL({p_h:1.0,r_h:4,s_depth:3,t_h:2}),
+      'aVF':mkL({p_h:1.8,r_h:8,s_depth:1,t_h:3.5}),
+      'V1': (()=>{const rr=60,pr=14,qrs=8,stLen=8,tw=22;return strip(ox=>{const pts=[];for(let i=0;i<rr;i++){let y=0,x=ox+i;y+=g(i,7,3.2,1.0);const qS=pr,qE=qS+qrs;if(i>=qS&&i<qE){const qi=i-qS;y+=g(qi,qrs*.42,qrs*.15,3);y-=g(qi,qrs*.72,qrs*.060,10);}const stS=qE,tE=stS+stLen+tw;if(i>=stS&&i<tE){const si=i-stS,ti=Math.max(0,i-(stS+stLen));if(i<stS+stLen){const sf=si/stLen;y-=2.5*(1-sf);}else{y+=g(ti,tw*.48,tw*.22,7);}}pts.push([x,y]);}return pts;},LW,2);})(),
+      'V2': (()=>{const rr=60,pr=14,qrs=8,stLen=8,tw=22;return strip(ox=>{const pts=[];for(let i=0;i<rr;i++){let y=0,x=ox+i;y+=g(i,7,3.2,1.2);const qS=pr,qE=qS+qrs;if(i>=qS&&i<qE){const qi=i-qS;y+=g(qi,qrs*.42,qrs*.15,6);y-=g(qi,qrs*.72,qrs*.060,12);}const stS=qE,tE=stS+stLen+tw;if(i>=stS&&i<tE){const si=i-stS,ti=Math.max(0,i-(stS+stLen));if(i<stS+stLen){const sf=si/stLen;y-=3*(1-sf);}else{y+=g(ti,tw*.48,tw*.22,13);}}pts.push([x,y]);}return pts;},LW,2);})(),
+      'V3': (()=>{const rr=60,pr=14,qrs=8,stLen=8,tw=22;return strip(ox=>{const pts=[];for(let i=0;i<rr;i++){let y=0,x=ox+i;y+=g(i,7,3.2,1.5);const qS=pr,qE=qS+qrs;if(i>=qS&&i<qE){const qi=i-qS;y+=g(qi,qrs*.42,qrs*.15,10);y-=g(qi,qrs*.72,qrs*.060,9);}const stS=qE,tE=stS+stLen+tw;if(i>=stS&&i<tE){const si=i-stS,ti=Math.max(0,i-(stS+stLen));if(i<stS+stLen){const sf=si/stLen;y-=3.5*(1-sf);}else{y+=g(ti,tw*.48,tw*.22,16);}}pts.push([x,y]);}return pts;},LW,2);})(),
+      'V4': (()=>{const rr=60,pr=14,qrs=8,stLen=8,tw=22;return strip(ox=>{const pts=[];for(let i=0;i<rr;i++){let y=0,x=ox+i;y+=g(i,7,3.2,1.7);const qS=pr,qE=qS+qrs;if(i>=qS&&i<qE){const qi=i-qS;y+=g(qi,qrs*.42,qrs*.15,15);y-=g(qi,qrs*.72,qrs*.060,5);}const stS=qE,tE=stS+stLen+tw;if(i>=stS&&i<tE){const si=i-stS,ti=Math.max(0,i-(stS+stLen));if(i<stS+stLen){const sf=si/stLen;y-=3*(1-sf);}else{y+=g(ti,tw*.48,tw*.22,15);}}pts.push([x,y]);}return pts;},LW,2);})(),
+      'V5': (()=>{const rr=60,pr=14,qrs=8,stLen=8,tw=22;return strip(ox=>{const pts=[];for(let i=0;i<rr;i++){let y=0,x=ox+i;y+=g(i,7,3.2,1.6);const qS=pr,qE=qS+qrs;if(i>=qS&&i<qE){const qi=i-qS;y+=g(qi,qrs*.42,qrs*.15,17);y-=g(qi,qrs*.72,qrs*.060,3);}const stS=qE,tE=stS+stLen+tw;if(i>=stS&&i<tE){const si=i-stS,ti=Math.max(0,i-(stS+stLen));if(i<stS+stLen){const sf=si/stLen;y-=2*(1-sf);}else{y+=g(ti,tw*.48,tw*.22,12);}}pts.push([x,y]);}return pts;},LW,2);})(),
+      'V6': mkL({p_h:1.6,r_h:13,s_depth:1,t_h:9,st:1.2,st_type:'mild_dep'}),
+    }
+  },
+  stemi_ant:{label:'前壁中隔梗塞',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',info:'V1〜V4でQS型＋大きなST上昇（tombstone型）≥2mm。LAD閉塞。Ⅱ・Ⅲ・aVFに対側性ST低下（近位LAD閉塞で多いが必発ではない。T波は陰性が多い）。',finding:'V1〜V3：QS型＋大きなST上昇。Ⅱ・Ⅲ・aVF：対側性ST低下（近位LAD閉塞で多く、必発ではない）＋陰性T波（陽性のこともある）。aVR：ST上昇。',hl:['V1','V2','V3','V4'],hl2:['Ⅱ','Ⅲ','aVF'],hl3:[],leads:{'Ⅰ':mkL({p_h:1.5,r_h:5,s_depth:1,t_h:2,st:.8,st_type:'iso'}),'Ⅱ':mkL({p_h:2.2,r_h:8,s_depth:1,t_h:3,st:1.5,st_type:'depress_inv'}),'Ⅲ':mkL({p_h:1.0,r_h:3,s_depth:1.5,t_h:3,st:2,st_type:'depress_inv'}),'aVR':mkL({p_h:1.8,p_neg:true,r_neg:true,r_h:8,t_h:3,st:2,st_type:'rise'}),'aVL':mkL({p_h:1.0,r_h:4,s_depth:2,t_h:2,st:1,st_type:'iso'}),'aVF':mkL({p_h:1.8,r_h:7,s_depth:1,t_h:3,st:2,st_type:'depress_inv'}),'V1':mkL({p_h:1.0,qs:true,r_h:9,qrs:9,t_h:6,st:3,st_type:'rise',t_w:22}),'V2':mkL({p_h:1.2,qs:true,r_h:12,qrs:9,t_h:7.5,st:4.5,st_type:'rise',t_w:22}),'V3':mkL({p_h:1.4,qs:true,r_h:11,qrs:9,t_h:6.7,st:4,st_type:'rise',t_w:22}),'V4':mkL({p_h:1.7,qs:true,r_h:9,qrs:9,t_h:6,st:3,st_type:'rise',t_w:21}),'V5':mkL({p_h:1.6,r_h:15,s_depth:2,t_h:4.8,st:1.5,st_type:'rise'}),'V6':mkL({p_h:1.6,r_h:12,s_depth:1,t_h:5})}},
+  stemi_inf:{label:'下壁梗塞',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',info:'Ⅱ・Ⅲ・aVFでST上昇（Q波を伴うこともあるが、発症早期はなくてもよい）。Ⅲ>ⅡはRCA近位部閉塞を示唆。aVLに最強の鏡像ST低下。',finding:'Ⅲ>ⅡのST上昇（RCA近位部閉塞の確実な指標）。aVL最強鏡像ST低下。',hl:['Ⅱ','Ⅲ','aVF'],hl2:['aVL'],hl3:['V2','V3','V4'],leads:{'Ⅰ':mkL({p_h:1.6,r_h:5,s_depth:1.5,q_depth:.2,t_h:4.5,st:1.6,st_type:'mild_dep'}),'Ⅱ':mkL({p_h:2.8,r_h:14,s_depth:0.3,q_depth:1.2,t_h:6,st:3,st_type:'rise',t_w:22,abnq:true}),'Ⅲ':mkL({p_h:1.6,r_h:13.5,s_depth:0.2,q_depth:1.5,t_h:6.7,st:4,st_type:'rise',t_w:23,abnq:true}),'aVR':mkL({p_h:1.8,p_neg:true,r_neg:true,r_h:9,t_h:3.5,st:1.5,st_type:'depress',t_w:18}),'aVL':mkL({p_h:1.0,r_h:3,s_depth:4,q_depth:.2,t_h:4.3,st:2,st_type:'depress_inv',t_w:19}),'aVF':mkL({p_h:2.2,r_h:14,s_depth:0.2,q_depth:1.2,t_h:6,st:3,st_type:'rise',t_w:22,abnq:true}),'V1':mkL({p_h:1.0,r_h:2.5,s_depth:9,q_depth:0,t_h:2}),'V2':mkL({p_h:1.3,r_h:5,s_depth:11,q_depth:0,t_h:4.5,st:1.6,st_type:'mild_dep'}),'V3':mkL({p_h:1.6,r_h:9,s_depth:9,q_depth:0,t_h:6,st:1.6,st_type:'mild_dep'}),'V4':mkL({p_h:1.8,r_h:17,s_depth:5,q_depth:.2,t_h:8,st:1.4,st_type:'mild_dep'}),'V5':mkL({p_h:1.7,r_h:19,s_depth:2,q_depth:.3,t_h:5.5}),'V6':mkL({p_h:1.6,r_h:13,s_depth:1,q_depth:.3,t_h:4.5})}},
+  stemi_lat:{label:'側壁梗塞（LCX鈍角枝）',tag:'最緊急',tagC:'#fde8e4',tagT:'#791f1f',info:'Ⅰ・aVL・V5・V6でST上昇（≤1mmが多い）。Ⅲ・aVFに鏡像ST低下。ST変化が軽微で見落とし注意。',finding:'赤枠（Ⅰ・aVL・V5・V6）：ST上昇は≤1mm。青枠（Ⅲ・aVF）：ST低下＋陰性T波（鏡像）。aVR：軽度ST低下。診断のコツ：Ⅲ・aVFのST低下から逆算してⅠ・aVLを再確認。',hl:['Ⅰ','aVL','V5','V6'],hl2:['Ⅲ','aVF'],hl3:[],leads:{'Ⅰ':mkL({p_h:1.4,r_h:5,s_depth:2,q_depth:.2,t_h:2.5,st:1,st_type:'rise',t_w:18}),'Ⅱ':mkL({p_h:1.8,r_h:6,s_depth:3,q_depth:.2,t_h:3,st:1,st_type:'depress',t_w:18}),'Ⅲ':mkL({p_h:1.2,r_h:3,s_depth:5,q_depth:.2,t_h:3,st:1.5,st_type:'depress_inv',t_w:18}),'aVR':mkL({p_h:1.5,p_neg:true,r_neg:true,r_h:6,t_h:3.5,st:.9,st_type:'depress_inv',t_w:16}),'aVL':mkL({p_h:0.8,r_h:4,s_depth:2,q_depth:.1,t_h:2.5,st:1,st_type:'rise',t_w:18}),'aVF':mkL({p_h:1.6,r_h:4,s_depth:4,q_depth:.2,t_h:3,st:1.5,st_type:'depress_inv',t_w:18}),'V1':mkL({p_h:1.0,r_h:2.5,s_depth:9,q_depth:0,t_h:1.5,st_type:'iso'}),'V2':mkL({p_h:1.3,r_h:5,s_depth:11.5,q_depth:0,t_h:3.5}),'V3':mkL({p_h:1.6,r_h:9,s_depth:9.5,q_depth:0,t_h:4.5}),'V4':mkL({p_h:1.9,r_h:17,s_depth:4.5,q_depth:.2,t_h:6.5}),'V5':mkL({p_h:1.6,r_h:17,s_depth:3,q_depth:.3,t_h:4,st:1,st_type:'rise',t_w:19}),'V6':mkL({p_h:1.6,r_h:13,s_depth:2,q_depth:.3,t_h:4.5,st:1,st_type:'rise',t_w:19})}},
+  posterior:{label:'後壁梗塞',tag:'梗塞',tagC:'#fffbf0',tagT:'#5a3800',info:'V1〜V4の水平型ST低下（V2・V3が最大）と高いR波、上向きT波が、後壁変化の鏡像として出現。V7〜V9追加誘導でST上昇≥0.5mm（40歳未満の男性は≥1mm）を確認。',finding:'肢誘導はほぼ変化なし（孤立性後壁梗塞）。青枠（V1〜V3）：水平型ST低下＋上向きT波、V1・V2でR波が高い。下の追加誘導V7〜V9（赤枠）：ST上昇 約0.5〜1mm（後壁そのものの変化。小さく見落としやすい）。茶枠（V4・V5）：軽度のST低下。R波・T波の変化は急性早期にはまだ目立たないこともある。',hl:[],hl2:['V1','V2','V3'],hl3:['V4','V5'],leads:{'Ⅰ':mkL({p_h:1.5,r_h:5,s_depth:1.5,t_h:2.5}),'Ⅱ':mkL({p_h:2.0,r_h:8,s_depth:1,t_h:4}),'Ⅲ':mkL({p_h:1.2,r_h:4,s_depth:2,t_h:2}),'aVR':mkL({p_h:1.5,p_neg:true,r_neg:true,r_h:7,t_h:-2.5}),'aVL':mkL({p_h:1.0,r_h:4,s_depth:3,t_h:2}),'aVF':mkL({p_h:1.8,r_h:7,s_depth:1.5,t_h:3}),'V1':mkL({p_h:1.0,r_h:8,s_depth:5,q_depth:0,t_h:5,st:1.8,st_type:'depress_h',t_w:18}),'V2':mkL({p_h:1.3,r_h:12,s_depth:5,q_depth:0,t_h:8,st:2.5,st_type:'depress_h',t_w:18}),'V3':mkL({p_h:1.6,r_h:13,s_depth:5.5,q_depth:0,t_h:8,st:2.3,st_type:'depress_h',t_w:18}),'V4':mkL({p_h:1.8,r_h:17,s_depth:5,q_depth:.2,t_h:7,st:1.8,st_type:'depress_h',t_w:18}),'V5':mkL({p_h:1.7,r_h:18,s_depth:3,q_depth:.3,t_h:6.5,st:1,st_type:'depress_h',t_w:18}),'V6':mkL({p_h:1.7,r_h:14,s_depth:2,q_depth:.3,t_h:5.5,st:.5,st_type:'depress_h',t_w:18})},
+    extra:{
+      'V7':mkL({p_h:1.6,r_h:8,s_depth:3,q_depth:.3,t_h:3,st:1,st_type:'rise',t_w:20}),
+      'V8':mkL({p_h:1.4,r_h:6,s_depth:1.5,q_depth:.5,t_h:2.5,st:1,st_type:'rise',t_w:20}),
+      'V9':mkL({p_h:1.2,r_h:4,s_depth:1,q_depth:.8,t_h:2,st:1,st_type:'rise',t_w:20})
+    },
+    extraNote:'左肩甲骨下にV4と同じ高さで配置（V7は後腋窩線、V8は肩甲骨下角線、V9は脊椎左縁）。後壁梗塞では、V1〜V3のST低下の鏡像としてST上昇が出ます。0.5〜1mm程度と小さく目立たないことがあるため見落とさないこと（診断基準：≥0.5mm、40歳未満の男性は≥1mm）。T波は初期は陽性でも、経過で陰性化し、異常Q波が出ることがあります。'},
+  lbbb:{label:'完全左脚ブロック',tag:'ブロック',tagC:'#daeaff',tagT:'#0a3f7f',info:'全誘導QRS≥120ms。V5・V6でM型幅広R波（ノッチ）。V1〜V3でQS波＋ST上昇（discordant）。新規LBBBは急性梗塞として対応。',finding:'赤枠（V1〜V3）：QS型＋大きなST上昇。青枠（V5・V6）：M型R波（ノッチ）＋ST低下。',hl:['V1','V2','V3'],hl2:['V5','V6'],hl3:[],leads:{'Ⅰ':mkL({p_h:2.2,qrs:17,m_wave:true,r_h:0,t_h:8,st:3,st_type:'depress_inv'}),'Ⅱ':mkL({p_h:2.5,qrs:17,m_wave:true,r_h:0,t_h:7,st:2.5,st_type:'depress_inv'}),'Ⅲ':mkL({p_h:1.8,qrs:17,r_neg:true,r_h:11,t_h:5,st:2.5,st_type:'rise'}),'aVR':mkL({p_h:2.0,qrs:17,r_neg:true,r_h:9,p_neg:true,t_h:4,st:2.5,st_type:'rise'}),'aVL':mkL({p_h:1.5,qrs:17,m_wave:true,r_h:0,t_h:7,st:2.5,st_type:'depress_inv'}),'aVF':mkL({p_h:2.0,qrs:17,r_neg:true,r_h:10,t_h:5,st:2.5,st_type:'rise'}),'V1':mkL({p_h:1.2,qrs:17,r_neg:true,r_h:15,t_h:7,st:3.5,st_type:'rise'}),'V2':mkL({p_h:1.5,qrs:17,r_neg:true,r_h:16,t_h:8,st:4,st_type:'rise'}),'V3':mkL({p_h:1.8,qrs:17,r_neg:true,r_h:13,t_h:7,st:3,st_type:'rise'}),'V4':mkL({p_h:2.0,qrs:17,m_wave:true,r_h:0,t_h:8,st:2.5,st_type:'depress_inv'}),'V5':mkL({p_h:1.8,qrs:17,m_wave:true,r_h:0,t_h:9,st:3,st_type:'depress_inv'}),'V6':mkL({p_h:1.8,qrs:17,m_wave:true,r_h:0,t_h:8,st:3,st_type:'depress_inv'})}},
+  rbbb:{label:'完全右脚ブロック',tag:'ブロック',tagC:'#daeaff',tagT:'#0a3f7f',info:"V1〜V2でRSR'型（うさぎ耳）＋ST低下・陰性T波（終末R'波と逆向きの二次性変化）。Ⅰ・V5・V6に幅広いS波。",finding:"RSR'型が核心。V1〜V2：ST低下＋陰性T波（二次性変化）。紫枠（V1・V2）：RSR'、紫枠（Ⅰ・V5・V6）：幅広い終末S波。",hl:[],hl2:[],hl3:[],hl4:['V1','V2','Ⅰ','V5','V6'],leads:{'Ⅰ':mkL({p_h:2.0,qrs:15,r_h:9,s_depth:10,t_h:4}),'Ⅱ':mkL({p_h:2.5,qrs:15,r_h:14,s_depth:5,t_h:5.5}),'Ⅲ':mkL({p_h:1.5,qrs:15,r_h:4,s_depth:6,t_h:2.5}),'aVR':mkL({p_h:1.8,qrs:15,r_neg:true,r_h:8,t_h:-3.5,p_neg:true}),'aVL':mkL({p_h:1.2,qrs:15,r_h:4,s_depth:8,t_h:2.5}),'aVF':mkL({p_h:2.0,qrs:15,r_h:10,s_depth:5,t_h:4.5}),'V1':mkL({p_h:1.2,qrs:15,rsrp:true,t_h:5.5,st:2.5,st_type:'depress_inv'}),'V2':mkL({p_h:1.4,qrs:15,rsrp:true,t_h:6,st:2,st_type:'depress_inv'}),'V3':mkL({p_h:1.8,qrs:13,r_h:12,s_depth:9,t_h:5.5}),'V4':mkL({p_h:1.8,qrs:12,r_h:18,s_depth:6,t_h:6.5}),'V5':mkL({p_h:1.6,qrs:12,r_h:17,s_depth:9,t_h:5.5}),'V6':mkL({p_h:1.6,qrs:12,r_h:13,s_depth:11,t_h:4.5})}},
+};
+
+const recipData={
+  inf:{rows:[{lead:'Ⅱ・Ⅲ・aVF',st:'ST上昇',stC:'#b83222',desc:'梗塞部位（下壁）'},{lead:'aVL（最強）',st:'ST低下',stC:'#1a6fbf',desc:'鏡像（最も強く反映）'},{lead:'Ⅰ',st:'ST低下',stC:'#1a6fbf',desc:'鏡像変化'},{lead:'V1〜V6',st:'変化なし',stC:'#9a9690',desc:'後壁関与ならV2〜V5に軽度低下'}],bars:[{lead:'Ⅱ・Ⅲ・aVF',color:'#b83222',dir:1,label:'ST上昇'},{lead:'aVL',color:'#1a6fbf',dir:-1.2,label:'最強の鏡像ST低下'},{lead:'Ⅰ',color:'#1a6fbf',dir:-.6,label:'ST低下（鏡像）'},{lead:'V誘導',color:'#c0bbb5',dir:0,label:'変化なし（後壁除く）'}]},
+  ant:{rows:[{lead:'V1〜V4',st:'ST上昇',stC:'#b83222',desc:'梗塞部位（前壁中隔）'},{lead:'Ⅱ・Ⅲ・aVF',st:'ST低下',stC:'#1a6fbf',desc:'鏡像変化（近位LAD閉塞で多い・必発ではない）'},{lead:'aVR',st:'ST上昇',stC:'#9a6010',desc:'広範囲梗塞・左主幹部を示唆'}],bars:[{lead:'V1〜V4',color:'#b83222',dir:1,label:'ST上昇（QS型）'},{lead:'Ⅱ・Ⅲ・aVF',color:'#1a6fbf',dir:-1,label:'ST低下（鏡像・必発ではない）'},{lead:'aVR',color:'#9a6010',dir:.5,label:'ST上昇（広範囲時）'}]},
+  lat:{rows:[{lead:'Ⅰ・aVL・V5・V6',st:'ST上昇',stC:'#b83222',desc:'梗塞部位（側壁）'},{lead:'Ⅱ・Ⅲ・aVF',st:'ST低下',stC:'#1a6fbf',desc:'鏡像変化'},{lead:'V1〜V4',st:'変化なし',stC:'#9a9690',desc:'前壁は無関係'}],bars:[{lead:'Ⅰ・aVL・V5・V6',color:'#b83222',dir:1,label:'ST上昇'},{lead:'Ⅱ・Ⅲ・aVF',color:'#1a6fbf',dir:-1,label:'ST低下（鏡像）'},{lead:'V1〜V4',color:'#c0bbb5',dir:0,label:'変化なし'}]}
+};
+
+function buildCard(d){
+  const pts=d.gen(),pPts=d.pWave?d.pWave():null;
+  const svg=render(pts,CW,CH,{ex:pPts,exColor:'#E8A000',sw:1.65});
+  const lbls=(d.lbls||[]).map(l=>`<span class="lbl" style="background:${l.c};color:${l.tc}">${l.t}</span>`).join('');
+  const dets=(d.details||[]).map(([k,v])=>`<div class="drow"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('');
+  return`<div class="card" data-cat="${d.cat}" onclick="togDet(this)">
+    <div class="card-head"><span class="tag" style="background:${d.tagC};color:${d.tagT}">${d.tag}</span><div class="dname">${d.name}</div><div class="dsub">${d.sub}</div></div>
+    <div class="ecg-wrap">${svg}</div>
+    <div class="lbls">${lbls}</div>
+    <div class="detail"><div class="detail-inner">${dets}</div></div>
+    <button class="tog" onclick="event.stopPropagation();togDet(this.closest('.card'))"><span class="arw">▲</span> 詳細</button>
+  </div>`;
+}
+document.getElementById('card-grid').innerHTML=diseases.map(buildCard).join('');
+
+const lo=['Ⅰ','Ⅱ','Ⅲ','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
+document.getElementById('lead-sel').innerHTML=Object.keys(lead12DB).map((id,i)=>`<button class="ls${i===0?' on':''}" onclick="selLead('${id}',this)">${lead12DB[id].label}</button>`).join('');
+
+function selLead(id,btn){
+  document.querySelectorAll('.ls').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  const data=lead12DB[id];
+  document.getElementById('l12-info').innerHTML=`<div class="l12-title"><span class="tag" style="background:${data.tagC};color:${data.tagT}">${data.tag}</span>${data.label}</div>${data.info}`;
+  document.getElementById('l12-grid').innerHTML=lo.map(ln=>{const pts=data.leads[ln],hl=(data.hl||[]).includes(ln),hl2=(data.hl2||[]).includes(ln),hl3=(data.hl3||[]).includes(ln),hl4=(data.hl4||[]).includes(ln);return`<div class="lead-cell${hl?' hl':hl2?' hl2':hl3?' hl3':hl4?' hl4':''}"><div class="lead-name">${ln}</div>${renderMini(pts,LW,LH,hl,hl2,hl3,hl4)}</div>`;}).join('');
+  const ex=document.getElementById('l12-extra');
+  if(data.extra){
+    ex.innerHTML=`<div class="l12-extra-title">追加誘導（後壁誘導）V7〜V9</div><div class="l12-extra-note">${data.extraNote||''}</div><div class="l12-grid" style="grid-template-columns:repeat(3,1fr)">`+Object.keys(data.extra).map(ln=>`<div class="lead-cell hl"><div class="lead-name">${ln}</div>${renderMini(data.extra[ln],LW,LH,true,false,false)}</div>`).join('')+'</div>';
+  }else{ex.innerHTML='';}
+  document.getElementById('finding').innerHTML=data.finding||'';
+}
+selLead('nsr',document.querySelector('.ls.on'));
+
+function showRecip(id,btn){
+  document.querySelectorAll('.recip-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  const d=recipData[id],bH=28,gap=7,padY=9,mid=74,totalH=padY*2+d.bars.length*(bH+gap)-gap;
+  let bars=`<line x1="${mid}" y1="${padY-3}" x2="${mid}" y2="${totalH-padY+3}" stroke="#d0ccc4" stroke-width="1"/>`;
+  bars+=`<text x="${mid}" y="${padY-6}" text-anchor="middle" font-size="9" fill="#c0bbb5">基線</text>`;
+  d.bars.forEach((b,i)=>{const y=padY+i*(bH+gap),bw=Math.abs(b.dir)*58,bx=b.dir>=0?mid:mid-bw;bars+=`<text x="${mid-4}" y="${y+bH/2}" text-anchor="end" dominant-baseline="central" font-size="10" fill="#5a5854">${b.lead}</text>`;if(bw>0)bars+=`<rect x="${bx}" y="${y+4}" width="${bw}" height="${bH-8}" rx="3" fill="${b.color}" opacity=".85"/>`;bars+=`<text x="${b.dir>=0?mid+bw+4:mid-bw-4}" y="${y+bH/2}" text-anchor="${b.dir>=0?'start':'end'}" dominant-baseline="central" font-size="9" fill="${b.color}">${b.label}</text>`;});
+  document.getElementById('recip-svg').innerHTML=`<svg viewBox="0 0 230 ${totalH}" xmlns="http://www.w3.org/2000/svg" style="background:#fffdf5;border-radius:5px;border:1px solid var(--border)">${bars}</svg>`;
+  document.getElementById('recip-table').innerHTML=d.rows.map(r=>`<div class="rtrow"><span class="rtlead" style="color:${r.stC}">${r.lead}</span><span class="rtst" style="color:${r.stC}">${r.st}</span><span class="rtdesc">${r.desc}</span></div>`).join('');
+}
+showRecip('inf',document.querySelector('.recip-btn.on'));
+
+function togDet(card){const d=card.querySelector('.detail'),a=card.querySelector('.arw'),open=d.classList.toggle('open');a.classList.toggle('open',open);card.querySelector('.tog').childNodes[1].textContent=open?' 閉じる':' 詳細';}
+function filt(cat,btn){document.querySelectorAll('.flt').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.card').forEach(c=>{c.classList.toggle('hidden',cat!=='all'&&c.dataset.cat!==cat);});}
+function sw(id){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.getElementById('pane-'+id).classList.add('on');document.querySelector(`.tab[onclick="sw('${id}')"]`).classList.add('on');if(id==='chk'){const w=document.getElementById('flow-app');if(w&&!w.children.length)renderFlow();}}
+
+// ═══ 所見→判断タブ ═══
+(function(){
+const LEADS=[{id:'I',name:'Ⅰ',group:'肢誘導'},{id:'II',name:'Ⅱ',group:'肢誘導'},{id:'III',name:'Ⅲ',group:'肢誘導'},{id:'aVR',name:'aVR',group:'肢誘導'},{id:'aVL',name:'aVL',group:'肢誘導'},{id:'aVF',name:'aVF',group:'肢誘導'},{id:'V1',name:'V1',group:'胸部誘導'},{id:'V2',name:'V2',group:'胸部誘導'},{id:'V3',name:'V3',group:'胸部誘導'},{id:'V4',name:'V4',group:'胸部誘導'},{id:'V5',name:'V5',group:'胸部誘導'},{id:'V6',name:'V6',group:'胸部誘導'}];
+const SIGS=[{id:'rise',label:'ST上昇',cls:'on-rise'},{id:'dep',label:'ST低下',cls:'on-dep'},{id:'tall',label:'T波増高',cls:'on-tall'},{id:'inv',label:'T波陰性',cls:'on-inv'},{id:'q',label:'異常Q波',cls:'on-q'},{id:'norm',label:'正常',cls:'on-norm'}];
+const dxState={};LEADS.forEach(l=>{dxState[l.id]={};});
+const DIAGNOSES=[
+  {id:'stemi_ant',name:'急性前壁中隔梗塞（STEMI）',vessel:'LAD（左前下行枝）',test(sm,has,cnt){let sc=0;const ar=cnt(['V1','V2','V3','V4'],'rise');if(ar<2)return 0;sc+=40;if(ar>=3)sc+=15;const md=cnt(['II','III','aVF'],'dep');if(md>=2)sc+=20;if(cnt(['V1','V2','V3'],'q')>=2)sc+=15;if(has('aVR','rise'))sc+=10;if(cnt(['II','III','aVF'],'rise')>=2)sc-=30;return sc;},detail(sm,has,cnt){const o=[];const ar=cnt(['V1','V2','V3','V4'],'rise');if(ar>0)o.push(`V1〜V4 ST上昇（${ar}誘導）`);if(cnt(['II','III','aVF'],'dep')>=1)o.push('Ⅱ・Ⅲ・aVF ST低下（鏡像）');if(has('aVR','rise'))o.push('aVR ST上昇（広範囲梗塞示唆）');return o;},warnings:['V4R追加→右室梗塞を除外','Door-to-balloon 90分以内のPCIが目標']},
+  {id:'stemi_inf',name:'急性下壁梗塞（STEMI）',vessel:'RCA（右冠動脈）',test(sm,has,cnt){let sc=0;const ir=cnt(['II','III','aVF'],'rise');if(ir<2)return 0;sc+=45;if(ir===3)sc+=10;if(has('aVL','dep')||has('aVL','inv'))sc+=20;if(cnt(['V1','V2','V3','V4'],'rise')>=3)sc-=25;return sc;},detail(sm,has,cnt){const o=[];const ir=cnt(['II','III','aVF'],'rise');if(ir>0)o.push(`Ⅱ・Ⅲ・aVF ST上昇（${ir}誘導）`);if(has('aVL','dep')||has('aVL','inv'))o.push('aVL 鏡像ST低下（最強の鏡像変化）');return o;},warnings:['V4R追加→右室梗塞（ニトロ禁忌）','嘔吐・徐脈はBezold-Jarisch反射']},
+  {id:'stemi_lat',name:'急性側壁梗塞（STEMI）',vessel:'LCX（左回旋枝）',test(sm,has,cnt){let sc=0;const lr=cnt(['I','aVL','V5','V6'],'rise');if(lr<2)return 0;sc+=35;const id=cnt(['II','III','aVF'],'dep');if(id>=2&&cnt(['II','III','aVF'],'rise')===0)sc+=15;return sc;},detail(sm,has,cnt){const o=[];const lr=cnt(['I','aVL','V5','V6'],'rise');if(lr>0)o.push(`Ⅰ・aVL・V5・V6 ST上昇（${lr}誘導）`);if(cnt(['II','III','aVF'],'dep')>=1)o.push('Ⅱ・Ⅲ・aVF ST低下（鏡像）');return o;},warnings:['LCX閉塞は標準12誘導でST上昇を示さないことが半数以上（報告により約50〜70%）。ST変化が軽微でも見落とさない']},
+  {id:'posterior',name:'後壁梗塞',vessel:'LCX / RCA',test(sm,has,cnt){let sc=0;if(cnt(['V1','V2','V3'],'dep')<2&&cnt(['V1','V2','V3'],'tall')<2)return 0;if(cnt(['V1','V2','V3'],'dep')>=2)sc+=35;if(cnt(['V1','V2','V3'],'tall')>=2)sc+=25;if(cnt(['II','III','aVF'],'rise')>=2)sc+=20;return sc;},detail(sm,has,cnt){const o=[];if(cnt(['V1','V2','V3'],'dep')>=1)o.push('V1〜V3 ST低下（後壁ST上昇の鏡像）');if(cnt(['V1','V2','V3'],'tall')>=1)o.push('V1〜V3 T波増高（後壁冠性T波の鏡像）');return o;},warnings:['V7〜V9追加誘導でST上昇≥0.5mmを確認（40歳未満の男性は≥1mm）']},
+  {id:'lbbb',name:'完全左脚ブロック（LBBB）',vessel:'刺激伝導系',test(sm,has,cnt){let sc=0;if(cnt(['V1','V2','V3'],'q')>=2&&cnt(['V5','V6'],'inv')>=1)sc+=30;if(cnt(['V1','V2','V3'],'rise')>=2&&cnt(['V5','V6'],'inv')>=1)sc+=25;return sc;},detail(sm,has,cnt){const o=[];if(cnt(['V1','V2','V3'],'q')>=1)o.push('V1〜V3 QS型（異常Q波）');if(cnt(['V5','V6'],'inv')>=1)o.push('V5・V6 T波陰性（discordant正常変化）');return o;},warnings:['新規LBBBは急性梗塞として対応（Sgarbossa基準を適用）']},
+  {id:'hyperk',name:'高カリウム血症',vessel:'電解質異常（腎不全等）',test(sm,has,cnt){const tL=LEADS.filter(l=>sm[l.id]&&sm[l.id].tall).length;let sc=0;if(tL>=4)sc+=45;if(tL>=6)sc+=15;return sc;},detail(sm,has,cnt){const tL=LEADS.filter(l=>sm[l.id]&&sm[l.id].tall).map(l=>l.name);const o=[];if(tL.length>0)o.push(`広範囲テント状T波: ${tL.join('・')}`);return o;},warnings:['P波消失→QRS幅広→VFの順で悪化','腎不全・ACE阻害薬服用歴を確認']},
+  {id:'stemi_ant_lat',name:'前壁・高位側壁梗塞（STEMI）',vessel:'LAD近位部（対角枝分岐前）',test(sm,has,cnt){let sc=0;const ar=cnt(['V2','V3','V4','V5','V6'],'rise');const hl=cnt(['I','aVL'],'rise');if(!(ar>=2&&hl>=1))return 0;sc+=45;if(ar>=3&&hl>=2)sc+=20;if(cnt(['II','III','aVF'],'dep')>=2)sc+=15;if(has('aVR','rise'))sc+=15;return sc;},detail(sm,has,cnt){const o=[];const ar=cnt(['V2','V3','V4','V5','V6'],'rise');if(ar>0)o.push(`V2〜V6 ST上昇（${ar}誘導）`);if(has('I','rise')||has('aVL','rise'))o.push('Ⅰ・aVL ST上昇（高位側壁関与）');if(has('aVR','rise'))o.push('aVR ST上昇 → LAD近位部/左主幹部閉塞');return o;},warnings:['LAD近位部閉塞は広範囲心筋壊死→最緊急','aVR ST上昇は左主幹部病変を示唆']},
+  {id:'dewinter',name:'de Winter ST/T wave complex',vessel:'LAD近位部（前下行枝近位部）',test(sm,has,cnt){let sc=0;const vd=cnt(['V1','V2','V3','V4','V5'],'dep');const vt=cnt(['V1','V2','V3','V4','V5'],'tall');if(!(vd>=2&&vt>=2))return 0;sc+=60;if(vd>=3)sc+=15;if(has('aVR','rise'))sc+=20;return sc;},detail(sm,has,cnt){const o=[];const vd=cnt(['V1','V2','V3','V4','V5'],'dep');if(vd>=1)o.push(`V1〜V5 upsloping ST低下（${vd}誘導）`);if(cnt(['V1','V2','V3','V4','V5'],'tall')>=1)o.push('高い対称性T波（de Winterパターンの核心）');if(has('aVR','rise'))o.push('aVR ST上昇 → LAD近位部閉塞の確認指標');return o;},warnings:['ST上昇がないためSTEMIと認識されにくい','即時カテーテル室搬送（STEMI等価病変）']},
+  {id:'hyperacute',name:'超急性期T波（梗塞30分以内）',vessel:'閉塞部位は多様',test(sm,has,cnt){const tL=LEADS.filter(l=>sm[l.id]&&sm[l.id].tall).length;const rL=LEADS.filter(l=>sm[l.id]&&sm[l.id].rise).length;let sc=0;if(tL>=2&&rL===0)sc+=45;if(tL>=3)sc+=15;if(cnt(['V1','V2','V3','V4'],'tall')>=2)sc+=15;return sc;},detail(sm,has,cnt){const tL=LEADS.filter(l=>sm[l.id]&&sm[l.id].tall).map(l=>l.name);const o=[];if(tL.length>0)o.push(`T波増高（幅広・高い・対称）: ${tL.join('・')}`);o.push('ST上昇が出現する前の最初の変化');return o;},warnings:['10分後に再記録→ST上昇に移行する可能性','この段階での再灌流が心筋壊死を最小化する']},
+  {id:'wellens',name:'Wellens症候群（LAD高度狭窄）',vessel:'LAD（左前下行枝）高度狭窄',test(sm,has,cnt){const vi=cnt(['V2','V3'],'inv');const vt=cnt(['V2','V3'],'tall');const rL=LEADS.filter(l=>sm[l.id]&&sm[l.id].rise).length;let sc=0;if(vi>=2&&rL===0)sc+=50;return sc;},detail(sm,has,cnt){const o=[];if(cnt(['V2','V3'],'inv')>=1)o.push('V2・V3 深い対称性陰性T波（B型／Type 2・多数を占める）');return o;},warnings:['ST上昇がなくても緊急カテーテルの適応','二相性T波（A型／Type 1・少数）は本入力では表現できません。波形で確認してください（A/Bの呼称が逆の文献もあるため波形で判断）','運動負荷試験禁忌（心筋梗塞誘発リスク）']},
+  {id:'rbbb_dx',name:'完全右脚ブロック（RBBB）',vessel:'刺激伝導系',test(sm,has,cnt){let sc=0;const v12change=cnt(['V1','V2'],'rise')+cnt(['V1','V2'],'dep');const sv=cnt(['I','V5','V6'],'dep');if(v12change>=1&&sv>=1)sc+=35;return sc;},detail(sm,has,cnt){const o=[];if(cnt(['V1','V2'],'rise')>=1||cnt(['V1','V2'],'dep')>=1)o.push("V1・V2 RSR'型＋ST変化（discordant正常変化）");if(cnt(['I','V5','V6'],'dep')>=1)o.push('Ⅰ・V5・V6 ST低下（幅広S波の反映）');return o;},warnings:['新規RBBBは肺塞栓・右室梗塞を考慮','S1Q3T3パターンと組み合わせで肺塞栓を示唆']},
+  {id:'pe',name:'肺塞栓症（PE）',vessel:'右室急性圧負荷',test(sm,has,cnt){const s1=has('I','dep')||has('I','inv');const q3=has('III','q');const t3=has('III','inv');const v13inv=cnt(['V1','V2','V3'],'inv');let sc=0;if(s1&&q3&&t3)sc+=45;if(v13inv>=2)sc+=20;return sc;},detail(sm,has,cnt){const o=[];const s1=has('I','dep')||has('I','inv');const q3=has('III','q');const t3=has('III','inv');if(s1&&q3&&t3)o.push('S1Q3T3パターン（右室急性負荷の特徴）');if(cnt(['V1','V2','V3'],'inv')>=1)o.push('V1〜V3 T波陰性（右室肥大・負荷）');return o;},warnings:['新規RBBBとS1Q3T3の合併は肺塞栓を強く示唆','D-dimer・造影CTを迅速に施行']},
+  {id:'nstemi_dx',name:'NSTEMI（非ST上昇型急性心筋梗塞）',vessel:'複数血管 / 非閉塞性血栓',test(sm,has,cnt){const dL=LEADS.filter(l=>sm[l.id]&&sm[l.id].dep).length;const rL=LEADS.filter(l=>sm[l.id]&&sm[l.id].rise).length;let sc=0;if(dL>=2&&rL===0)sc+=35;if(dL>=4)sc+=15;if(has('aVR','rise')&&dL>=3)sc+=20;if(rL>=3)sc-=30;return sc;},detail(sm,has,cnt){const o=[];const dL=LEADS.filter(l=>sm[l.id]&&sm[l.id].dep).map(l=>l.name);if(dL.length>0)o.push(`ST低下: ${dL.join('・')}`);if(has('aVR','rise'))o.push('aVR ST上昇 → 左主幹部・多枝病変');return o;},warnings:['ST上昇なしでもトロポニン上昇→NSTEMI確定','TIMI/GRACEスコアで緊急度を層別化']},
+];
+function buildDxUI(){
+  const wrap=document.getElementById('leads-wrap-dx');if(!wrap)return;
+  let lastGrp='';
+  LEADS.forEach(lead=>{
+    if(lead.group!==lastGrp){if(lastGrp){const sp=document.createElement('div');sp.style.height='6px';wrap.appendChild(sp);}const gl=document.createElement('div');gl.className='group-lbl-dx';gl.textContent=lead.group;wrap.appendChild(gl);lastGrp=lead.group;}
+    const row=document.createElement('div');row.className='lead-grid-dx';
+    let btns='<div class="btn-row-dx">';SIGS.forEach(sig=>{btns+=`<button class="sig-btn" id="dbtn-${lead.id}-${sig.id}" onclick="dxToggle('${lead.id}','${sig.id}','${sig.cls}')">${sig.label}</button>`;});btns+='</div>';
+    row.innerHTML=`<div class="lead-name-dx">${lead.name}</div>${btns}`;wrap.appendChild(row);
+  });
+}
+window.dxToggle=function(leadId,sigId,cls){
+  const btn=document.getElementById(`dbtn-${leadId}-${sigId}`);const cur=dxState[leadId][sigId];
+  if(cur){dxState[leadId][sigId]=false;btn.classList.remove(cls);}
+  else{
+    if(sigId==='norm'){SIGS.forEach(s=>{if(s.id!=='norm'){dxState[leadId][s.id]=false;const b=document.getElementById(`dbtn-${leadId}-${s.id}`);if(b)b.className='sig-btn';}});}
+    else{dxState[leadId].norm=false;const nb=document.getElementById(`dbtn-${leadId}-norm`);if(nb)nb.className='sig-btn';if(sigId==='rise'){dxState[leadId].dep=false;const b=document.getElementById(`dbtn-${leadId}-dep`);if(b)b.className='sig-btn';}if(sigId==='dep'){dxState[leadId].rise=false;const b=document.getElementById(`dbtn-${leadId}-rise`);if(b)b.className='sig-btn';}if(sigId==='tall'){dxState[leadId].inv=false;const b=document.getElementById(`dbtn-${leadId}-inv`);if(b)b.className='sig-btn';}if(sigId==='inv'){dxState[leadId].tall=false;const b=document.getElementById(`dbtn-${leadId}-tall`);if(b)b.className='sig-btn';}}
+    dxState[leadId][sigId]=true;btn.classList.add(cls);
+  }
+  dxDiagnose();
+};
+function dxDiagnose(){
+  const selected=[];LEADS.forEach(l=>{const sigs=Object.keys(dxState[l.id]).filter(s=>dxState[l.id][s]);if(sigs.length>0){const labels=sigs.map(s=>{const found=SIGS.find(x=>x.id===s);return found?found.label:s;});selected.push(`${l.name}:${labels.join('/')}`);}});
+  const sumEl=document.getElementById('sel-summary-dx');if(sumEl)sumEl.textContent=selected.length>0?`選択中 → ${selected.join('　 ')}`:'所見を選択してください';
+  if(selected.length===0){const rb=document.getElementById('result-box-dx');if(rb)rb.innerHTML='<div class="result-empty">誘導の所見を選択すると診断候補が表示されます</div>';return;}
+  const sm={};LEADS.forEach(l=>{sm[l.id]=dxState[l.id];});
+  const _has=(l,s)=>!!(sm[l]&&sm[l][s]);const _cnt=(ls,s)=>ls.filter(l=>_has(l,s)).length;
+  const scored=DIAGNOSES.map(dx=>{return{...dx,score:dx.test(sm,_has,_cnt)};}).filter(d=>d.score>0).sort((a,b)=>b.score-a.score);
+  const rb=document.getElementById('result-box-dx');if(!rb)return;
+  if(scored.length===0){rb.innerHTML='<div class="no-match">選択された所見の組み合わせに一致する典型的なパターンが見つかりません。<br>別の誘導に所見がある可能性や、波形の見直しを検討してください。</div>';return;}
+  const maxSc=scored[0].score;let html='<div class="rst-title">診断候補（所見一致度順）</div>';
+  scored.forEach(dx=>{const rel=dx.score/maxSc;const lv=rel>=0.85?'high':rel>=0.55?'mid':'low';const prob=lv==='high'?'可能性高':lv==='mid'?'可能性あり':'参考';const det=dx.detail?dx.detail(sm,_has,_cnt):[];html+=`<div class="dx-card c-${lv}"><div class="dx-head"><span class="dx-dname">${dx.name}</span><span class="dx-prob">${prob}</span></div><div class="dx-vessel">責任血管：${dx.vessel}</div>${det.length>0?`<div class="dx-reason">${det.map(l=>'・'+l).join('<br>')}</div>`:''}${dx.warnings&&dx.warnings.length>0?`<div class="dx-warn">${dx.warnings.map(w=>'⚠ '+w).join('<br>')}</div>`:''}</div>`;});
+  rb.innerHTML=html;
+}
+window.resetDx=function(){LEADS.forEach(l=>{dxState[l.id]={};SIGS.forEach(s=>{const b=document.getElementById(`dbtn-${l.id}-${s.id}`);if(b)b.className='sig-btn';});});const sumEl=document.getElementById('sel-summary-dx');if(sumEl)sumEl.textContent='所見を選択してください';const rb=document.getElementById('result-box-dx');if(rb)rb.innerHTML='<div class="result-empty">誘導の所見を選択すると診断候補が表示されます</div>';};
+buildDxUI();
+})();
+
+// ═══ 測定チェックフロー ═══
+const FLOW=[{id:'s0',type:'start',badge:'開始条件',badgeCls:'fa-badge-gray',title:'観察などの結果\n心疾患を疑う',sub:'もしくはその可能性を否定できず',tags:['上半身の疼痛・不快感','冷汗','呼吸困難'],next:'s1'},{id:'s1',type:'diamond',badge:'STEP 1 / 判断',badgeCls:'fa-badge-warn',title:'他の病態・疾患への\n優先対応が必要ですか？',sub:'心停止切迫・ショック・アナフィラキシーなど',choices:[{label:'有り — 他病態を優先',cls:'fa-btn-red',next:'end_other',alert:'他病態への対応を優先してください。\n12誘導測定はこの傷病者には不要または後回しとします。',alertCls:'fa-alert-danger'},{label:'無し — 次へ進む',cls:'fa-btn-green',next:'s2'}]},{id:'s2',type:'action',badge:'STEP 2 / 確認',badgeCls:'fa-badge-blue',title:'心電図モニター・既往等の確認',sub:'ST-T変化・QRS幅広頻拍・高度徐脈・PVC多発を確認',next:'s3'},{id:'s3',type:'diamond',badge:'STEP 3 / 判断',badgeCls:'fa-badge-warn',title:'次のいずれかが\n認められますか？',sub:'以下の条件②のうち1つ以上',tags:['ST-T変化','QRS幅広頻拍','高度徐脈（40/分未満）','多発PVC','狭心症・梗塞既往','硝酸薬処方歴','119番通報前後の意識消失'],choices:[{label:'無し — 通常対応へ',cls:'fa-btn-gray',next:'end_norm'},{label:'有り — 12誘導へ進む',cls:'fa-btn-blue',next:'s4'}]},{id:'s4',type:'action_dark',badge:'STEP 4 / 実施',badgeCls:'fa-badge-dark',title:'12誘導心電図の測定',sub:'搬送遅延なく車内測定が基本\nアーチファクト等で困難な場合は搬送優先',next:'s5'},{id:'s5',type:'action',badge:'STEP 5 / 評価',badgeCls:'fa-badge-blue',title:'12誘導心電図の評価',sub:'ST変化・QRS幅・不整脈パターンを\n系統的に確認',next:'s6'},{id:'s6',type:'end_ok',title:'搬送先の選定と\n測定結果の報告・伝送',sub:'傷病者の状況・観察所見とともに\n搬送先医師またはオンラインMC医師に報告'},{id:'end_other',type:'end_ng',title:'他病態への対応を優先',sub:'12誘導測定は不要または後回しとします'},{id:'end_norm',type:'end_norm',title:'通常プロトコールに\n従った活動',sub:'12誘導測定の適応なし'}];
+const FLOW_MAP={};FLOW.forEach(f=>{FLOW_MAP[f.id]=f;});
+const TOTAL_MAIN=6;const STEP_ORDER=['s0','s1','s2','s3','s4','s5','s6'];
+let history=['s0'];
+function calcProgress(){const lastId=history[history.length-1];if(['end_other','end_norm'].includes(lastId))return{pct:100,label:'終了'};const idx=STEP_ORDER.indexOf(lastId);if(idx<0)return{pct:100,label:'完了'};return{pct:Math.round(idx/TOTAL_MAIN*100),label:`STEP ${Math.max(1,idx)} / ${TOTAL_MAIN}`};}
+function tagsHtml(tags){if(!tags||!tags.length)return'';return`<div class="fa-tags">${tags.map(t=>`<span class="fa-tag">${t}</span>`).join('')}</div>`;}
+function nextBtn(nextId,dark=false){const wrap=document.createElement('div');wrap.style.marginTop='4px';const btn=document.createElement('button');btn.className=`fa-btn ${dark?'fa-btn-blue':'fa-btn-next'}`;btn.innerHTML=`<span>確認 — 次へ進む</span><span class="fa-btn-arrow">›</span>`;btn.onclick=()=>advance(nextId);wrap.appendChild(btn);return wrap;}
+function resetBtn(){const btn=document.createElement('button');btn.className='fa-reset';btn.textContent='最初からやり直す';btn.onclick=()=>{history=['s0'];renderFlow();};return btn;}
+function buildFlowCard(step,isLast){
+  const el=document.createElement('div');
+  if(step.type==='start'){el.className='fa-card fa-card-accent';el.innerHTML=`<div class="fa-step-badge ${step.badgeCls}">${step.badge}</div><div class="fa-title" style="white-space:pre-line">${step.title}</div><div class="fa-sub">${step.sub}</div>${tagsHtml(step.tags)}`;if(isLast&&step.next)el.appendChild(nextBtn(step.next));}
+  else if(step.type==='action'){el.className='fa-card fa-card-accent';el.innerHTML=`<div class="fa-step-badge ${step.badgeCls}">${step.badge}</div><div class="fa-title" style="white-space:pre-line">${step.title}</div><div class="fa-sub" style="white-space:pre-line">${step.sub}</div>`;if(isLast&&step.next)el.appendChild(nextBtn(step.next));}
+  else if(step.type==='action_dark'){el.className='fa-card-dark';el.innerHTML=`<div class="fa-step-badge ${step.badgeCls}">${step.badge}</div><div class="fa-title-dark" style="white-space:pre-line">${step.title}</div><div class="fa-sub-dark" style="white-space:pre-line">${step.sub}</div>`;if(isLast&&step.next)el.appendChild(nextBtn(step.next,true));}
+  else if(step.type==='diamond'){
+    el.className='fa-card fa-card-warn';el.innerHTML=`<div class="fa-step-badge ${step.badgeCls}">${step.badge}</div><div class="fa-title" style="white-space:pre-line">${step.title}</div><div class="fa-sub">${step.sub}</div>${tagsHtml(step.tags)}`;
+    if(isLast){
+      const alertEl=document.createElement('div');alertEl.id=`alert-${step.id}`;el.appendChild(alertEl);
+      const row=document.createElement('div');row.className='fa-btn-row';
+      step.choices.forEach(ch=>{const btn=document.createElement('button');btn.className=`fa-btn ${ch.cls}`;btn.innerHTML=`<span>${ch.label}</span><span class="fa-btn-arrow">›</span>`;btn.onclick=()=>{row.querySelectorAll('button').forEach(b=>{b.classList.add('fa-btn-disabled');b.style.opacity='0.35';});btn.style.opacity='1';btn.classList.remove('fa-btn-disabled');if(ch.alert){const aEl=document.getElementById(`alert-${step.id}`);if(aEl)aEl.innerHTML=`<div class="fa-alert ${ch.alertCls||'fa-alert-warn'}" style="white-space:pre-line">${ch.alert}</div>`;}setTimeout(()=>advance(ch.next),400);};row.appendChild(btn);});el.appendChild(row);
+    }else{const chosen=step.choices.find(c=>history.includes(c.next));if(chosen){const badge=document.createElement('div');badge.style.cssText='margin-top:8px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#555';badge.innerHTML=`<span style="width:20px;height:20px;background:#1a1a18;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px">✓</span>${chosen.label}`;el.appendChild(badge);}}
+  }
+  else if(step.type==='end_ok'){el.className='fa-card fa-card-green';el.innerHTML=`<div class="fa-result fa-result-ok"><div class="fa-result-icon">✅</div><div class="fa-result-title" style="white-space:pre-line">${step.title}</div><div class="fa-result-sub" style="white-space:pre-line">${step.sub}</div></div>`;el.appendChild(resetBtn());}
+  else if(step.type==='end_ng'){el.className='fa-card fa-card-red';el.innerHTML=`<div class="fa-result fa-result-ng"><div class="fa-result-icon">⚠️</div><div class="fa-result-title" style="white-space:pre-line">${step.title}</div><div class="fa-result-sub" style="white-space:pre-line">${step.sub}</div></div>`;el.appendChild(resetBtn());}
+  else if(step.type==='end_norm'){el.className='fa-card';el.innerHTML=`<div class="fa-result fa-result-norm"><div class="fa-result-icon">📋</div><div class="fa-result-title-gray" style="white-space:pre-line">${step.title}</div><div class="fa-result-sub-gray" style="white-space:pre-line">${step.sub}</div></div>`;el.appendChild(resetBtn());}
+  return el;
+}
+function renderFlow(){
+  const wrap=document.getElementById('flow-app');if(!wrap)return;wrap.innerHTML='';
+  const prog=calcProgress();const progWrap=document.createElement('div');progWrap.className='fa-progress-wrap';progWrap.innerHTML=`<div class="fa-progress-track"><div class="fa-progress-fill" style="width:${prog.pct}%"></div></div><div class="fa-progress-label">${prog.label}</div>`;wrap.appendChild(progWrap);
+  history.forEach((sid,idx)=>{
+    const step=FLOW_MAP[sid];if(!step)return;const isLast=idx===history.length-1;
+    const card=buildFlowCard(step,isLast);card.classList.add('fa-animate');wrap.appendChild(card);
+    if(!isLast&&!['end_other','end_norm','end_ok'].includes(sid)){const arr=document.createElement('div');arr.className='fa-arrow';arr.innerHTML=`<svg width="24" height="28" viewBox="0 0 24 28"><line x1="12" y1="0" x2="12" y2="20" stroke="#ccc" stroke-width="2"/><path d="M5,14 L12,24 L19,14" fill="none" stroke="#ccc" stroke-width="2" stroke-linejoin="round"/></svg>`;wrap.appendChild(arr);}
+  });
+  const lastId=history[history.length-1];if(['end_other','end_norm','end_ok'].includes(lastId)){const notes=document.createElement('div');notes.className='fa-notes';notes.innerHTML='※心停止切迫・ショック等の他疾患優先状況では本処置不要<br>※アーチファクト等で測定困難な場合は搬送優先<br>※心肺停止後に自己心拍が再開した傷病者も12誘導の適応<br><br>出典：日本循環器学会・日本臨床救急医学会「救急業務における12誘導心電図の測定プロトコールについて（提言）」令和5年3月';wrap.appendChild(notes);}
+  const last=wrap.lastElementChild;if(last&&history.length>1)last.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function advance(nextId){if(!nextId||!FLOW_MAP[nextId])return;if(history[history.length-1]===nextId)return;history.push(nextId);renderFlow();}
+renderFlow();
+</script>
+</body>
+</html>

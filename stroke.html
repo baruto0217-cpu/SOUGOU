@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>脳卒中評価アプリ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sans-serif;background:#eef0f4;color:#1c1c1e}
+:root{--red:#c0392b;--redl:#fdf0ef;--green:#27ae60;--greenl:#eafaf1;--bd:1px solid #e4e4e6;--shadow:0 2px 8px rgba(0,0,0,0.10);--shadow-sm:0 1px 4px rgba(0,0,0,0.08)}
+.app{max-width:420px;margin:0 auto;background:#eef0f4;padding-bottom:24px;min-height:100vh}
+.nav{display:flex;background:#fff;border-bottom:var(--bd);position:sticky;top:0;z-index:99;box-shadow:var(--shadow-sm)}
+.nb{flex:1;padding:12px 4px;font-size:13px;border:none;background:none;color:#8e8e93;cursor:pointer;border-bottom:2px solid transparent}
+.nb.on{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+.pg{display:none;padding:12px}
+.pg.on{display:block}
+.card{background:#fff;border-radius:14px;border:var(--bd);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.ch{padding:13px 16px;border-bottom:var(--bd);font-size:14px;font-weight:600;color:#1c1c1e;background:#fafafa}
+.cb{padding:8px 16px}
+.srow{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:var(--bd);cursor:pointer}
+.srow:last-child{border-bottom:none}
+.sico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.redi{background:var(--redl)}
+.blui{background:#eaf3fb}
+.si{flex:1;min-width:0}
+.sn{font-size:14px;font-weight:600;margin-bottom:2px}
+.sw{font-size:11px;color:var(--red);font-weight:600;margin-bottom:4px}
+.sd{font-size:12px;color:#636366;line-height:1.55}
+.ss{font-size:12px;margin-top:4px}
+.ss.done{color:var(--green);font-weight:600}
+.ss.undone{color:#aeaeb2}
+.chevron{color:#c7c7cc;font-size:18px;flex-shrink:0;margin-top:2px}
+.memo{background:#fff8f7;border-left:3px solid var(--red);border-radius:0 8px 8px 0;padding:10px 13px;margin-bottom:10px;font-size:12px;color:#636366;line-height:1.6;box-shadow:var(--shadow-sm)}
+.ptitle{font-size:16px;font-weight:700;margin-bottom:12px;color:#1c1c1e}
+.scorebox{background:#f7f7f9;border-radius:10px;border:var(--bd);padding:13px 16px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm)}
+.snum{font-size:30px;font-weight:700}
+.slbl{font-size:12px;color:#636366;margin-bottom:2px}
+.badge{font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;box-shadow:var(--shadow-sm)}
+.low{background:var(--greenl);color:#1e8449}
+.mid{background:#fef9e7;color:#b7770d}
+.high{background:var(--redl);color:var(--red)}
+.orow{padding:12px 0;border-bottom:var(--bd)}
+.orow:last-child{border-bottom:none}
+.otitle{font-size:13px;font-weight:600;margin-bottom:2px;color:#1c1c1e}
+.osub{font-size:11px;color:#636366;margin-bottom:9px}
+.obtns{display:flex;gap:8px}
+.obtn{flex:1;padding:10px 8px;border-radius:10px;border:var(--bd);background:#fff;cursor:pointer;font-size:12px;color:#1c1c1e;line-height:1.3;text-align:center;box-shadow:var(--shadow-sm)}
+.nrow{padding:12px 0;border-bottom:var(--bd)}
+.nrow:last-child{border-bottom:none}
+.nq{font-size:13px;font-weight:600;margin-bottom:7px;color:#1c1c1e}
+.nopts{display:flex;flex-direction:column;gap:6px}
+.no{padding:10px 12px;border-radius:9px;border:var(--bd);font-size:12px;cursor:pointer;display:flex;align-items:center;background:#fff;color:#1c1c1e;box-shadow:var(--shadow-sm)}
+.no.sel{background:var(--redl);border-color:var(--red);box-shadow:0 2px 6px rgba(192,57,43,0.15)}
+.no .ns{font-size:11px;color:#aeaeb2;margin-left:auto;flex-shrink:0;padding-left:8px}
+.no.sel .ns{color:var(--red)}
+.pbar{height:5px;background:#e5e5ea;border-radius:3px;margin-bottom:4px}
+.pfill{height:100%;background:var(--red);border-radius:3px;transition:width 0.3s}
+.crow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:var(--bd);cursor:pointer}
+.crow:last-child{border-bottom:none}
+.chk{width:24px;height:24px;border-radius:7px;border:1.5px solid #c7c7cc;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow-sm)}
+.fl{font-size:12px;color:#636366;margin-bottom:4px;margin-top:13px}
+.fl:first-child{margin-top:0}
+.ti{width:100%;padding:11px 13px;border-radius:9px;border:var(--bd);background:#fff;font-size:16px;color:#1c1c1e;margin-top:4px;box-shadow:var(--shadow-sm)}
+.tw{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.tb{padding:7px 14px;border-radius:20px;border:var(--bd);background:#fff;cursor:pointer;font-size:12px;color:#636366;box-shadow:var(--shadow-sm)}
+.tb.on{background:var(--redl);border-color:var(--red);color:var(--red);font-weight:600;box-shadow:0 2px 6px rgba(192,57,43,0.15)}
+.smrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:var(--bd)}
+.smrow:last-child{border-bottom:none}
+.smk{font-size:13px;color:#636366}
+.smv{font-size:13px;font-weight:600}
+.alrt{border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:13px;line-height:1.4;box-shadow:var(--shadow-sm)}
+.ared{background:var(--redl);color:var(--red);border:1px solid #f1948a}
+.agreen{background:var(--greenl);color:#1e8449;border:1px solid #82e0aa}
+.drow{padding:10px 0;border-bottom:var(--bd)}
+.drow:last-child{border-bottom:none}
+.drow-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.dname{font-size:13px;font-weight:600;color:#1c1c1e;flex:1}
+.dbar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.dbar-wrap{flex:1;height:7px;background:#e5e5ea;border-radius:4px;overflow:hidden}
+.dbar-fill{height:100%;border-radius:4px;transition:width 0.4s}
+.dpct{font-size:12px;font-weight:700;min-width:28px;text-align:right}
+.dreason{font-size:11px;color:#636366;line-height:1.5}
+.disclaimer{font-size:10px;color:#aeaeb2;margin-top:10px;line-height:1.5;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+<div id="back-row" style="display:none;background:#fff;border-bottom:1px solid #e4e4e6;padding:8px 16px">
+  <button id="backBtn" onclick="goBack()" style="background:none;border:none;color:#c0392b;font-size:14px;font-weight:600;cursor:pointer;padding:0">← 戻る</button>
+</div>
+
+<div class="nav">
+  <button class="nb on" id="nav-screening" onclick="showPage('screening')">評価</button>
+  <button class="nb" id="nav-inquiry" onclick="showPage('inquiry')">問診</button>
+  <button class="nb" id="nav-summary" onclick="showPage('summary')">まとめ</button>
+</div>
+
+<div class="pg on" id="pg-screening">
+  <div id="scr-list">
+    <div class="ptitle">評価スケール</div>
+    <div class="card">
+      <div class="ch">スクリーニング</div>
+      <div class="cb">
+        <div class="srow" onclick="showDetail('befast')">
+          <div class="sico redi">🔍</div>
+          <div class="si">
+            <div class="sn">BE-FAST</div>
+            <div class="sw">現着直後・第一印象</div>
+            <div class="sd">バランス・眼・顔・腕・言語の6項目。1つでも陽性なら脳卒中を強く疑う。シンプルで迅速な初期スクリーニング。</div>
+            <div class="ss undone" id="st-befast">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('cpss')">
+          <div class="sico redi">🩺</div>
+          <div class="si">
+            <div class="sn">CPSS（Cincinnati）</div>
+            <div class="sw">BE-FAST陽性後・現場評価</div>
+            <div class="sd">顔・腕・言語の3項目。感度72%・特異度90%。救急隊の標準スクリーニングとして広く普及。</div>
+            <div class="ss undone" id="st-cpss">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('race')">
+          <div class="sico redi">🧬</div>
+          <div class="si">
+            <div class="sn">ELVOスクリーン（RACE scale）</div>
+            <div class="sw">大血管閉塞（ELVO）が疑われる時</div>
+            <div class="sd">5点以上でELVO感度85%。血管内治療施設への直接搬送判断に活用。</div>
+            <div class="ss undone" id="st-race">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch">🧩 専門評価</div>
+      <div class="cb">
+        <div class="srow" onclick="showDetail('cerebellar')">
+          <div class="sico" style="background:#f0ebff">🎯</div>
+          <div class="si">
+            <div class="sn">小脳失調テスト</div>
+            <div class="sw">めまい・ふらつき・運動失調がある時</div>
+            <div class="sd">指鼻試験・踵膝試験・ジアドコキネーシス・Romberg試験・眼振・断綴性言語の6項目。後方循環系脳卒中の評価に有用。</div>
+            <div class="ss undone" id="st-cerebellar">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('hints')">
+          <div class="sico" style="background:#f0ebff">👁</div>
+          <div class="si">
+            <div class="sn">HINTS試験</div>
+            <div class="sw">めまいの中枢性・末梢性鑑別</div>
+            <div class="sd">Head Impulse・眼振・Skew deviationの3項目。中枢性めまいの感度97%。BPPVと脳幹・小脳梗塞の鑑別に有用。</div>
+            <div class="ss undone" id="st-hints">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('pupil')">
+          <div class="sico" style="background:#f0ebff">🔦</div>
+          <div class="si">
+            <div class="sn">瞳孔評価</div>
+            <div class="sw">意識障害・脳ヘルニアが疑われる時</div>
+            <div class="sd">瞳孔径・対光反射・左右差を評価。脳ヘルニア・脳幹病変の早期発見に重要。</div>
+            <div class="ss undone" id="st-pupil">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('meningeal')">
+          <div class="sico" style="background:#f0ebff">🦴</div>
+          <div class="si">
+            <div class="sn">髄膜刺激症状</div>
+            <div class="sw">突然の頭痛・頭頸部痛がある時</div>
+            <div class="sd">項部硬直・Kernig徴候・Brudzinski徴候の3項目。くも膜下出血・髄膜炎の鑑別に必須。</div>
+            <div class="ss undone" id="st-meningeal">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('reflex')">
+          <div class="sico" style="background:#f0ebff">🔨</div>
+          <div class="si">
+            <div class="sn">神経反射評価</div>
+            <div class="sw">錐体路障害・運動ニューロン障害の確認</div>
+            <div class="sd">Babinski反射・深部腱反射（上下肢）を評価。上位・下位運動ニューロン障害の鑑別に有用。</div>
+            <div class="ss undone" id="st-reflex">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch">意識・重症度</div>
+      <div class="cb">
+        <div class="srow" onclick="showDetail('gcs')">
+          <div class="sico blui">👁</div>
+          <div class="si">
+            <div class="sn">GCS</div>
+            <div class="sw">意識障害がある時・全例共通</div>
+            <div class="sd">開眼・言語・運動で意識を数値化（3〜15点）。国際標準で引き継ぎに有効。8点以下は気道確保を検討。</div>
+            <div class="ss undone" id="st-gcs">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('nihss')">
+          <div class="sico blui">📋</div>
+          <div class="si">
+            <div class="sn">NIHSS（15項目）</div>
+            <div class="sw">脳卒中確定後・詳細な重症度評価</div>
+            <div class="sd">脳卒中の国際標準重症度スケール（0〜42点）。tPA・血栓回収の適応判断に必須。搬送中の入力で初療がスムーズ。</div>
+            <div class="ss undone" id="st-nihss">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="srow" onclick="showDetail('mrs')">
+          <div class="sico blui">🦽</div>
+          <div class="si">
+            <div class="sn">mRS（発症前ADL）</div>
+            <div class="sw">発症前の生活状況を確認する時</div>
+            <div class="sd">発症前の日常生活機能を0〜5点で評価。tPA・血栓回収の適応判断の基準。家族から早めに聴取。</div>
+            <div class="ss undone" id="st-mrs">未実施</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="scr-detail" style="display:none"></div>
+</div>
+
+<div class="pg" id="pg-inquiry">
+  <div class="ptitle">問診チェックリスト</div>
+  <div class="card">
+    <div class="ch">🕐 時間系（最重要）</div>
+    <div class="cb" style="padding:12px 16px">
+      <div class="fl">発症時刻 / 最終健常確認時刻（LKW）</div>
+      <input class="ti" type="datetime-local" id="lkw-time" onchange="saveInq()">
+      <div class="fl">発見時刻</div>
+      <input class="ti" type="datetime-local" id="found-time" onchange="saveInq()">
+      <div class="fl">発症状況</div>
+      <div class="tw">
+        <button class="tb" onclick="toggleTag(this,'onset-act')">活動時</button>
+        <button class="tb" onclick="toggleTag(this,'onset-rest')">安静時</button>
+        <button class="tb" onclick="toggleTag(this,'onset-sleep')">起床時（睡眠中）</button>
+        <button class="tb" onclick="toggleTag(this,'onset-unk')">不明</button>
+      </div>
+      <div class="fl">症状の経過</div>
+      <div class="tw">
+        <button class="tb" onclick="toggleTag(this,'prog-sudden')">突発完成</button>
+        <button class="tb" onclick="toggleTag(this,'prog-step')">段階的悪化</button>
+        <button class="tb" onclick="toggleTag(this,'prog-improve')">改善傾向</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">🧠 主訴・症状</div>
+    <div class="cb" style="padding:12px 16px">
+      <div class="tw">
+        <button class="tb" onclick="toggleTag(this,'sx-face')">顔面麻痺</button>
+        <button class="tb" onclick="toggleTag(this,'sx-arm')">上肢麻痺</button>
+        <button class="tb" onclick="toggleTag(this,'sx-leg')">下肢麻痺</button>
+        <button class="tb" onclick="toggleTag(this,'sx-speech')">言語障害</button>
+        <button class="tb" onclick="toggleTag(this,'sx-visual')">視野障害</button>
+        <button class="tb" onclick="toggleTag(this,'sx-ataxia')">運動失調</button>
+        <button class="tb" onclick="toggleTag(this,'sx-head')">頭痛</button>
+        <button class="tb" onclick="toggleTag(this,'sx-neckpain')">頭頸部痛</button>
+        <button class="tb" onclick="toggleTag(this,'sx-vomit')">嘔吐</button>
+        <button class="tb" onclick="toggleTag(this,'sx-dizzy')">めまい</button>
+        <button class="tb" onclick="toggleTag(this,'sx-diplopia')">複視</button>
+        <button class="tb" onclick="toggleTag(this,'sx-seizure')">痙攣</button>
+        <button class="tb" onclick="toggleTag(this,'sx-disturb')">意識障害</button>
+        <button class="tb" onclick="toggleTag(this,'sx-trauma')">転倒・外傷</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">💊 薬剤（tPA禁忌確認）</div>
+    <div class="cb" style="padding:4px 16px">
+      <div class="crow" onclick="toggleChk('drug-warfarin')">
+        <div class="chk" id="drug-warfarin"></div>
+        <div><div style="font-size:14px">ワルファリン服用中</div></div>
+      </div>
+      <div class="crow" onclick="toggleChk('drug-doac')">
+        <div class="chk" id="drug-doac"></div>
+        <div>
+          <div style="font-size:14px">DOAC服用中</div>
+          <div style="font-size:11px;color:#636366">直接経口抗凝固薬（血栓予防薬）</div>
+          <div style="font-size:11px;color:#aeaeb2;margin-top:2px">エリキュース・イグザレルト・リクシアナ・プラザキサ</div>
+          <div style="font-size:11px;color:#c0392b;margin-top:2px">最終服用時刻も確認</div>
+        </div>
+      </div>
+      <div class="crow" onclick="toggleChk('drug-antiplatelet')">
+        <div class="chk" id="drug-antiplatelet"></div>
+        <div><div style="font-size:14px">抗血小板薬服用中</div><div style="font-size:11px;color:#636366">アスピリン、クロピドグレル等</div></div>
+      </div>
+      <div class="crow" onclick="toggleChk('drug-insulin')">
+        <div class="chk" id="drug-insulin"></div>
+        <div><div style="font-size:14px">インスリン・血糖降下薬</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">🏥 既往歴・リスク因子</div>
+    <div class="cb" style="padding:12px 16px">
+      <div class="tw">
+        <button class="tb" onclick="toggleTag(this,'hx-stroke')">脳卒中既往</button>
+        <button class="tb" onclick="toggleTag(this,'hx-tia')">TIA既往</button>
+        <button class="tb" onclick="toggleTag(this,'hx-htn')">高血圧</button>
+        <button class="tb" onclick="toggleTag(this,'hx-af')">心房細動</button>
+        <button class="tb" onclick="toggleTag(this,'hx-dm')">糖尿病</button>
+        <button class="tb" onclick="toggleTag(this,'hx-hld')">脂質異常症</button>
+        <button class="tb" onclick="toggleTag(this,'hx-heart')">心疾患</button>
+        <button class="tb" onclick="toggleTag(this,'hx-smoke')">喫煙</button>
+        <button class="tb" onclick="toggleTag(this,'hx-surg')">3ヶ月以内の手術</button>
+        <button class="tb" onclick="toggleTag(this,'hx-bleed')">出血・外傷歴</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-summary">
+  <div class="ptitle">まとめ</div>
+  <div id="sum-content"></div>
+  <div id="reset-normal" style="margin-top:12px">
+    <button onclick="showResetConfirm()" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid #c0392b;background:#fff;color:#c0392b;font-size:14px;font-weight:600;cursor:pointer;">🔄 リセット（全データを消去）</button>
+  </div>
+  <div id="reset-confirm" style="display:none;margin-top:12px;background:#fdf0ef;border:1.5px solid #c0392b;border-radius:12px;padding:14px">
+    <div style="font-size:13px;font-weight:600;color:#c0392b;margin-bottom:10px;text-align:center">⚠️ 全データを消去します。よろしいですか？</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="execReset()" style="flex:1;padding:11px;border-radius:9px;border:none;background:#c0392b;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">消去する</button>
+      <button onclick="hideResetConfirm()" style="flex:1;padding:11px;border-radius:9px;border:1.5px solid #e0e0e0;background:#fff;color:#636366;font-size:14px;cursor:pointer;">キャンセル</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+
+const ST={scores:{},inq:{tags:{},drugs:{},lkw:'',found:''}};
+function saveState(){}
+const SC={
+  befast:{name:'BE-FAST',memo:'【GL2021改訂2025】救急隊員の脳卒中病院前評価ツールの習得が推奨度Aで勧められる（エビデンスレベル中）。1項目でも陽性なら脳卒中を強く疑い、速やかにCPSSへ進む。',items:[
+    {id:'balance',label:'Balance（平衡障害）',sub:'急に歩けない、ふらつく',pos:'異常あり',neg:'異常なし'},
+    {id:'eyes',label:'Eyes（眼の異常）',sub:'急に視力低下、複視',pos:'異常あり',neg:'異常なし'},
+    {id:'face',label:'Face（顔面麻痺）',sub:'顔の歪み・非対称',pos:'麻痺あり',neg:'正常'},
+    {id:'arm',label:'Arm（上肢麻痺）',sub:'腕が下がる・力が入らない',pos:'麻痺あり',neg:'正常'},
+    {id:'speech',label:'Speech（言語障害）',sub:'ろれつが回らない・失語',pos:'異常あり',neg:'正常'},
+    {id:'time',label:'Time（時間）',sub:'発症時刻を確認済み（症状の評価点には数えません）',pos:'確認済み',neg:'不明',noscore:true},
+  ],type:'pos',interp:(s)=>s>=1?{t:'脳卒中を強く疑う',c:'high'}:{t:'陰性（経過観察）',c:'low'}},
+  cpss:{name:'CPSS（Cincinnati）',memo:'【GL2021改訂2025】病院前脳卒中評価ツール（PSLS）の標準化手法として推奨。1項目でも陽性なら脳卒中疑いとしてストロークセンターへの搬送を選定する（推奨度A）。',items:[
+    {id:'face',label:'顔面の麻痺',sub:'笑った時の口元の歪み',pos:'麻痺あり（異常）',neg:'左右対称（正常）'},
+    {id:'arm',label:'上肢挙上',sub:'両腕を前方水平に挙上・閉眼10秒保持',pos:'片側が落下（異常）',neg:'両側保持（正常）'},
+    {id:'speech',label:'構音障害・失語',sub:'「太陽がさんさんと輝いている」を復唱',pos:'異常あり',neg:'正常'},
+  ],type:'pos',interp:(s)=>s>=1?{t:'脳卒中疑い（感度72%）',c:'high'}:{t:'陰性',c:'low'}},
+  race:{name:'ELVOスクリーン（RACE scale）',memo:'【GL2021改訂2025】主幹動脈閉塞（ELVO）が疑われる場合はMothership法（発症地点から血管内治療可能施設へ直接搬送）を考慮（推奨度C エビデンスレベル中）。失語と無視はどちらか一方のみ加点（合計0〜9点）。5点以上でELVOを疑う（感度85%）。5点未満でもELVOは除外できない。',questions:[
+    {id:'face',label:'顔面麻痺',opts:[{v:0,t:'なし'},{v:1,t:'軽度'},{v:2,t:'重度'}]},
+    {id:'arm',label:'上肢麻痺',opts:[{v:0,t:'なし'},{v:1,t:'軽度（一部動く）'},{v:2,t:'重度（動かない）'}]},
+    {id:'leg',label:'下肢麻痺',opts:[{v:0,t:'なし'},{v:1,t:'軽度（一部動く）'},{v:2,t:'重度（動かない）'}]},
+    {id:'gaze',label:'頭眼偏位・共同偏視',opts:[{v:0,t:'なし'},{v:1,t:'あり'}]},
+    {id:'aphasia',label:'失語（右片麻痺の場合に評価）',opts:[{v:0,t:'正常'},{v:1,t:'言語理解/表出障害'},{v:2,t:'発語なし/全失語'}]},
+    {id:'neglect',label:'身体失認・半側空間無視（左片麻痺の場合に評価）',opts:[{v:0,t:'なし'},{v:1,t:'部分的'},{v:2,t:'完全な反側空間無視'}]},
+  ],type:'sum',interp:(s)=>s<=4?{t:'ELVO低リスク（5点未満）',c:'low'}:{t:'ELVOを疑う（5点以上）',c:'high'}},
+  gcs:{name:'GCS',memo:'【GL2021改訂2025】脳卒中急性期の継続的な生理学的モニタリングは予後改善と合併症防止に有効（推奨度A）。8点以下は重症で気道確保・補助換気を検討しSpO₂94%以上を保つ。引き継ぎ時はE○V○M○形式で。',questions:[
+    {id:'eye',label:'E：開眼',opts:[{v:4,t:'4: 自然開眼'},{v:3,t:'3: 呼びかけで開眼'},{v:2,t:'2: 疼痛刺激で開眼'},{v:1,t:'1: 開眼なし'}]},
+    {id:'verbal',label:'V：言語',opts:[{v:5,t:'5: 見当識あり'},{v:4,t:'4: 混乱した会話'},{v:3,t:'3: 不適当な言葉'},{v:2,t:'2: 理解不能な音'},{v:1,t:'1: なし'}]},
+    {id:'motor',label:'M：運動',opts:[{v:6,t:'6: 命令に従う'},{v:5,t:'5: 疼痛に払いのける'},{v:4,t:'4: 疼痛で逃避'},{v:3,t:'3: 異常屈曲'},{v:2,t:'2: 異常伸展'},{v:1,t:'1: なし'}]},
+  ],type:'sum',min:3,interp:(s)=>s>=13?{t:'軽症（13-15）',c:'low'}:s>=9?{t:'中等症（9-12）',c:'mid'}:{t:'重症（≤8）・気道確保検討',c:'high'}},
+  nihss:{name:'NIHSS',memo:'【GL2021改訂2025】NIHSS≥6かつ内頚動脈/中大脳動脈M1閉塞・mRS 0-1・ASPECTS≥6・18歳以上をすべて満たす場合に機械的血栓回収療法の適応（推奨度A）。rt-PA（0.6mg/kg）は発症4.5時間以内に適応（推奨度A）。搬送中に入力し院内に事前連絡を。',questions:[
+    {id:'1a',label:'1a: 意識水準',sub:'声かけや疼痛刺激への反応を観察する',opts:[{v:0,t:'0: 完全覚醒'},{v:1,t:'1: 傾眠（呼びかけや軽い刺激で開眼）'},{v:2,t:'2: 昏迷（繰り返す刺激でかろうじて反応）'},{v:3,t:'3: 昏睡（刺激に無反応・反射のみ）'}]},
+    {id:'1b',label:'1b: 意識水準の質問',sub:'「今月は何月ですか？」「あなたは何歳ですか？」を口頭で質問する（ヒントなし）',opts:[{v:0,t:'0: 両方正解'},{v:1,t:'1: 一方のみ正解（挿管・重度構音障害・外国語など、失語以外の理由で発語できない場合も1点）'},{v:2,t:'2: 両方不正解（失語・昏迷で理解できない場合、無反応も2点）'}]},
+    {id:'1c',label:'1c: 意識水準の従命',sub:'「目を開けて・閉じて」「手を握って・開いて」と指示する（麻痺側でなく非麻痺側で評価）',opts:[{v:0,t:'0: 両方正確に実行できる'},{v:1,t:'1: 一方のみ実行できる'},{v:2,t:'2: 両方実行できない'}]},
+    {id:'2',label:'2: 注視（水平眼球運動）',sub:'患者の正面に立ち、左右に指を動かして眼球が追従するか確認する',opts:[{v:0,t:'0: 正常（両眼が追従する）'},{v:1,t:'1: 部分的注視麻痺（一側に偏位するが越えられる）'},{v:2,t:'2: 完全注視麻痺・強制偏視（越えられない）'}]},
+    {id:'3',label:'3: 視野',sub:'患者の正面から両手を広げ、左右・上下の指の動きが見えるか確認する（対座法）',opts:[{v:0,t:'0: 正常'},{v:1,t:'1: 部分的半盲（一側の視野の一部が欠損）'},{v:2,t:'2: 完全半盲（一側の視野が全部欠損）'},{v:3,t:'3: 両側性半盲（皮質盲含む・全盲）'}]},
+    {id:'4',label:'4: 顔面麻痺',sub:'「歯を見せて」「頬をふくらませて」と指示し、顔面の左右差を観察する',opts:[{v:0,t:'0: 正常（左右対称）'},{v:1,t:'1: 軽度（笑顔で非対称・鼻唇溝消失）'},{v:2,t:'2: 部分的（下顔面の完全麻痺）'},{v:3,t:'3: 完全麻痺（上下顔面ともに完全麻痺）'}]},
+    {id:'5a',label:'5a: 上肢の運動（左）',sub:'仰臥位で左腕を45°挙上させ10秒保持させる。切断・肩関節癒合は評価不能（UN）として未入力にする（採点しない）',opts:[{v:0,t:'0: 10秒間下垂しない'},{v:1,t:'1: 10秒以内に下垂するが、ベッドには達しない'},{v:2,t:'2: 重力に抗する動きはあるが、挙上できない／保持できずベッドまで落ちる'},{v:3,t:'3: 重力に抗する動きなし（落ちるが、わずかに動く）'},{v:4,t:'4: 全く動かない'}]},
+    {id:'5b',label:'5b: 上肢の運動（右）',sub:'仰臥位で右腕を45°挙上させ10秒保持させる。切断・肩関節癒合は評価不能（UN）として未入力にする',opts:[{v:0,t:'0: 10秒間下垂しない'},{v:1,t:'1: 10秒以内に下垂するが、ベッドには達しない'},{v:2,t:'2: 重力に抗する動きはあるが、挙上できない／保持できずベッドまで落ちる'},{v:3,t:'3: 重力に抗する動きなし（落ちるが、わずかに動く）'},{v:4,t:'4: 全く動かない'}]},
+    {id:'6a',label:'6a: 下肢の運動（左）',sub:'仰臥位で左脚を30°挙上させ5秒保持させる。切断・股関節癒合は評価不能（UN）として未入力にする',opts:[{v:0,t:'0: 5秒間下垂しない'},{v:1,t:'1: 5秒以内に下垂するが、ベッドには達しない'},{v:2,t:'2: 重力に抗する動きはあるが、挙上できない／保持できずベッドまで落ちる'},{v:3,t:'3: 重力に抗する動きなし（落ちるが、わずかに動く）'},{v:4,t:'4: 全く動かない'}]},
+    {id:'6b',label:'6b: 下肢の運動（右）',sub:'仰臥位で右脚を30°挙上させ5秒保持させる。切断・股関節癒合は評価不能（UN）として未入力にする',opts:[{v:0,t:'0: 5秒間下垂しない'},{v:1,t:'1: 5秒以内に下垂するが、ベッドには達しない'},{v:2,t:'2: 重力に抗する動きはあるが、挙上できない／保持できずベッドまで落ちる'},{v:3,t:'3: 重力に抗する動きなし（落ちるが、わずかに動く）'},{v:4,t:'4: 全く動かない'}]},
+    {id:'7',label:'7: 運動失調（指鼻・踵膝試験）',sub:'「指で私の指を触って、次に自分の鼻を触って」を繰り返させる。下肢は踵で反対の膝を滑らせる。麻痺で動かせない肢の失調は評価しない（0点）',opts:[{v:0,t:'0: なし（なめらかに実行できる）'},{v:1,t:'1: 一肢のみ失調あり'},{v:2,t:'2: 二肢以上に失調あり'}]},
+    {id:'8',label:'8: 感覚',sub:'意識がある場合：「ここを触っているのがわかりますか？左右どちら？」。意識障害では疼痛刺激に対する逃避反応の左右差を観察',opts:[{v:0,t:'0: 正常（左右差なし）'},{v:1,t:'1: 軽〜中等度（鈍麻はあるが痛みを感じる）'},{v:2,t:'2: 高度〜完全（触れても全く感じない）'}]},
+    {id:'9',label:'9: 最良言語（失語）',sub:'絵カードの説明・文章の復唱・物の名称を言わせる（口頭で答えられない場合は書かせて評価）',opts:[{v:0,t:'0: 失語なし（正常）'},{v:1,t:'1: 軽〜中等度（言い間違い・理解障害あるが会話可）'},{v:2,t:'2: 重度（断片的な表出のみ・理解が困難）'},{v:3,t:'3: 無言・全失語（全く通じない）'}]},
+    {id:'10',label:'10: 構音障害',sub:'「パパ・ピピ・ポポ」や短文を復唱させ、発音の明瞭さを評価する（失語とは別に評価）。挿管など物理的な障壁で評価できない場合はUN（未入力・採点しない）',opts:[{v:0,t:'0: 正常'},{v:1,t:'1: 軽〜中等度（聞き取れるがろれつが回らない）'},{v:2,t:'2: 重度（ほぼ聞き取れない）'}]},
+    {id:'11',label:'11: 消去現象・注意障害',sub:'両手を同時に刺激し、一方だけに気づくか確認。または「どちら側の体に触っているかわかりますか？」と問う',opts:[{v:0,t:'0: 異常なし'},{v:1,t:'1: 一感覚様式のみで消去（触覚or視覚のどちらか）'},{v:2,t:'2: 重度の消去・半側空間無視（一側を完全に無視）'}]},
+  ],type:'sum',interp:(s)=>s===0?{t:'神経脱落症状なし',c:'low'}:s<=5?{t:'軽症（0-5）',c:'low'}:s<=15?{t:'中等症（6-15）・血栓回収適応考慮',c:'mid'}:s<=20?{t:'重症（16-20）',c:'high'}:{t:'最重症（21-42）',c:'high'}},
+  mrs:{name:'mRS（発症前ADL）',memo:'【GL2021改訂2025】機械的血栓回収療法の適応基準の一つとして「発症前mRS 0または1」が求められる（推奨度A）。mRS≥2は適応外となる可能性があり早期把握が重要。家族・同居人から聴取。',questions:[
+    {id:'mrs',label:'発症前の生活機能',opts:[
+      {v:0,t:'0: 症状なし、完全自立'},{v:1,t:'1: 症状あるが支障なし'},
+      {v:2,t:'2: 軽度障害（以前の活動すべては困難だが、介助なしで身の回りのことは可能）'},{v:3,t:'3: 中等度障害（何らかの介助を要するが、介助なしで歩行可能）'},
+      {v:4,t:'4: やや高度障害（自力歩行不可）'},{v:5,t:'5: 高度障害（寝たきり）'},
+    ]},
+  ],type:'single',interp:(s)=>s<=1?{t:'良好（血栓回収適応基準内）',c:'low'}:s<=3?{t:'中等度障害（血栓回収適応外の可能性）',c:'mid'}:{t:'高度障害（要介護・適応慎重判断）',c:'high'}},
+  cerebellar:{name:'小脳失調テスト',memo:'小脳・後方循環系病変の評価に使用。複数の検査で異常がある場合は小脳梗塞・出血を強く疑い、椎骨脳底動脈系のELVO（後方循環型）として対応を検討する。',tests:[
+    {id:'finger_nose',label:'指鼻試験',sub:'「私の指を触って→自分の鼻を触って」を繰り返させる。測定障害・企図振戦の有無を観察',opts:[{v:0,t:'正常（なめらか）'},{v:1,t:'軽度異常（ぎこちない・わずかに振戦）'},{v:2,t:'重度異常（著明な測定障害・企図振戦）'}]},
+    {id:'heel_knee',label:'踵膝試験',sub:'仰臥位で踵を反対側の膝に当て、脛の上をゆっくり滑らせる。ふらつき・偏位の有無を確認',opts:[{v:0,t:'正常'},{v:1,t:'軽度異常（やや偏位する）'},{v:2,t:'重度異常（著明に偏位・実行困難）'}]},
+    {id:'diadochokinesis',label:'反復拮抗運動（ジアドコキネーシス）',sub:'手の甲と手のひらを素早く交互に膝に打ち付けさせる。速度・リズムの乱れを観察',opts:[{v:0,t:'正常（左右均等・リズム一定）'},{v:1,t:'軽度異常（一側または両側でぎこちない）'},{v:2,t:'重度異常（著明な不規則・実行困難）'}]},
+    {id:'romberg',label:'Romberg試験',sub:'両足をそろえて直立させ、開眼→閉眼で動揺を比較。閉眼で著明に悪化すれば陽性（後索障害）。小脳性は開眼でも動揺あり',opts:[{v:0,t:'正常（閉眼でも安定）'},{v:1,t:'閉眼で軽度動揺（感覚性失調疑い）'},{v:2,t:'開眼でも動揺あり（小脳性失調疑い）'},{v:3,t:'閉眼で転倒（Romberg陽性）'}]},
+    {id:'nystagmus',label:'眼振',sub:'患者の眼を正面・左右・上下に追わせ、眼振（眼球が規則的に揺れる動き）の有無を観察する',opts:[{v:0,t:'なし'},{v:1,t:'水平眼振あり'},{v:2,t:'垂直眼振あり（中枢性を強く疑う）'},{v:3,t:'回旋眼振あり（中枢性を疑う）'}]},
+    {id:'dysarthria',label:'断綴性言語（小脳性構音障害）',sub:'「パパ・ピピ・ポポ」や長い文章を発話させる。爆発性・断綴性・スキャン言語の有無を確認',opts:[{v:0,t:'正常'},{v:1,t:'軽度異常（ぎこちない・単調）'},{v:2,t:'重度異常（爆発性・断綴性が明確）'}]},
+  ]},
+  hints:{name:'HINTS試験',memo:'めまいを主訴とする患者において、中枢性（脳幹・小脳梗塞）と末梢性（BPPV・前庭神経炎）を鑑別する。対象は、診察時にも持続する急性のめまい（急性前庭症候群）で自発眼振がある患者のみ。発作性・短時間のめまい、症状消失後、眼振のない患者には適用しない。訓練された評価者が行った場合の中枢性検出感度は高い（97%前後の報告）が、「末梢性パターン」でも脳卒中は除外できない。',tests:[
+    {id:'head_impulse',label:'Head Impulse Test（頭部衝動試験）',sub:'患者に検者の鼻を注視させ、頭部を素早く左右どちらかに回旋する。末梢性では修正性サッカードが出現（陽性）。中枢性では正常（陰性）のことが多い',opts:[{v:0,t:'正常（修正サッカードなし）→ 中枢性を疑う'},{v:1,t:'異常（修正サッカードあり）→ 末梢性を示唆'}]},
+    {id:'nystagmus_hints',label:'眼振の方向（Direction of Nystagmus）',sub:'注視方向を変えて眼振の向きを確認する。末梢性は一方向性、中枢性は注視方向変換性（方向変換性）の眼振を示す',opts:[{v:0,t:'一方向性眼振 → 末梢性を示唆'},{v:1,t:'方向変換性眼振 → 中枢性を疑う'},{v:2,t:'垂直眼振 → 中枢性を強く疑う'}]},
+    {id:'skew',label:'Skew Deviation（斜偏位）',sub:'交互遮蔽試験：片眼を手で覆い素早く外す動作を左右交互に繰り返す。眼球の垂直方向のずれ（再固視運動）があれば陽性',opts:[{v:0,t:'なし（正常） → 末梢性を示唆'},{v:1,t:'あり（垂直再固視運動） → 中枢性を強く疑う'}]},
+  ]},
+  pupil:{name:'瞳孔評価',memo:'脳ヘルニア・脳幹病変・薬物中毒の評価に必須。瞳孔不同（左右差2mm以上）や対光反射消失は緊急性の高い所見であり、即座に上位医療機関への搬送を検討する。',tests:[
+    {id:'size_r',label:'右瞳孔径',sub:'ペンライトで右瞳孔の大きさを確認。正常は2〜5mm程度',opts:[{v:0,t:'正常（2〜5mm）'},{v:1,t:'縮瞳（2mm未満）→ 橋病変・麻薬・縮瞳薬'},{v:2,t:'散瞳（6mm以上）→ 動眼神経麻痺・脳ヘルニア・散瞳薬'}]},
+    {id:'size_l',label:'左瞳孔径',sub:'ペンライトで左瞳孔の大きさを確認',opts:[{v:0,t:'正常（2〜5mm）'},{v:1,t:'縮瞳（2mm未満）'},{v:2,t:'散瞳（6mm以上）'}]},
+    {id:'anisocoria',label:'瞳孔不同（左右差）',sub:'両側の瞳孔径を比較する。2mm以上の差は異常',opts:[{v:0,t:'なし（左右均等）'},{v:1,t:'軽度（1〜2mm差）'},{v:2,t:'著明（2mm超）→ 動眼神経麻痺・ヘルニア疑い'}]},
+    {id:'light_r',label:'右：対光反射',sub:'ペンライトで右眼に光を当て、同側（直接）と反対側（間接）の収縮を確認',opts:[{v:0,t:'正常（直接・間接ともに収縮）'},{v:1,t:'遅延または減弱'},{v:2,t:'消失（緊急性高い）'}]},
+    {id:'light_l',label:'左：対光反射',sub:'ペンライトで左眼に光を当て、同側と反対側の収縮を確認',opts:[{v:0,t:'正常（直接・間接ともに収縮）'},{v:1,t:'遅延または減弱'},{v:2,t:'消失（緊急性高い）'}]},
+  ]},
+  meningeal:{name:'髄膜刺激症状',memo:'くも膜下出血・細菌性髄膜炎の鑑別に必須。突然の激しい頭痛（thunderclap headache）に髄膜刺激症状が加わる場合はくも膜下出血を強く疑い、速やかに対応施設へ搬送する。',tests:[
+    {id:'nuchal',label:'項部硬直',sub:'仰臥位で患者の頭部を前屈させる。抵抗があれば陽性。ただし頸椎病変でも陽性になるため注意',opts:[{v:0,t:'なし（正常）'},{v:1,t:'軽度（やや抵抗あり）'},{v:2,t:'著明（強い抵抗・顎が胸につかない）'}]},
+    {id:'kernig',label:'Kernig徴候',sub:'仰臥位で股関節・膝関節を90°屈曲させ、そこから膝を伸展させる。135°以下で疼痛・抵抗が出れば陽性',opts:[{v:0,t:'陰性（正常）'},{v:1,t:'陽性（疼痛・抵抗あり）→ 髄膜刺激疑い'}]},
+    {id:'brudzinski',label:'Brudzinski徴候',sub:'仰臥位で頭部を前屈させた時に、両側の股関節・膝関節が自然に屈曲すれば陽性',opts:[{v:0,t:'陰性（正常）'},{v:1,t:'陽性（股関節・膝が屈曲）→ 髄膜刺激疑い'}]},
+  ]},
+  reflex:{name:'神経反射評価',memo:'錐体路障害（上位運動ニューロン）と末梢神経障害（下位運動ニューロン）の鑑別に使用。急性脳卒中では初期に腱反射が低下→後に亢進する場合があるため、急性期の評価は慎重に解釈する。',tests:[
+    {id:'babinski_r',label:'Babinski反射（右）',sub:'足底の外側を踵から母趾に向かってゆっくり擦る。母趾が背屈し他趾が扇状に開けば陽性（病的反射）',opts:[{v:0,t:'陰性（母趾が底屈 → 正常）'},{v:1,t:'陽性（母趾が背屈 → 錐体路障害疑い）'},{v:2,t:'判定不能（疼痛回避・把握反射等）'}]},
+    {id:'babinski_l',label:'Babinski反射（左）',sub:'左足底の外側を同様に擦る',opts:[{v:0,t:'陰性（正常）'},{v:1,t:'陽性（錐体路障害疑い）'},{v:2,t:'判定不能'}]},
+    {id:'dtr_upper',label:'上肢腱反射（上腕二頭筋・三頭筋）',sub:'打腱器で上腕二頭筋腱・三頭筋腱を叩き、反射の強さを左右で比較する',opts:[{v:0,t:'正常（左右対称）'},{v:1,t:'一側または両側で亢進 → 上位ニューロン障害疑い'},{v:2,t:'一側または両側で減弱・消失 → 下位ニューロン障害疑い'},{v:3,t:'左右差あり → 局在病変疑い'}]},
+    {id:'dtr_lower',label:'下肢腱反射（膝蓋腱・アキレス腱）',sub:'打腱器で膝蓋腱・アキレス腱を叩き、反射の強さを左右で比較する',opts:[{v:0,t:'正常（左右対称）'},{v:1,t:'一側または両側で亢進 → 上位ニューロン障害疑い'},{v:2,t:'一側または両側で減弱・消失 → 下位ニューロン障害疑い'},{v:3,t:'左右差あり → 局在病変疑い'}]},
+  ]}
+};
+
+let curKey=null,curAns={};
+
+function showPage(n){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+n).classList.add('on');
+  ['screening','inquiry','summary'].forEach(k=>document.getElementById('nav-'+k).classList.toggle('on',k===n));
+  if(n==='summary') renderSummary();
+  if(n==='screening'){curKey=null;document.getElementById('scr-list').style.display='';document.getElementById('scr-detail').style.display='none';}
+  document.getElementById('back-row').style.display=(n==='screening'&&!!curKey)?'':'none';
+}
+
+function goBack(){curKey=null;document.getElementById('scr-list').style.display='';document.getElementById('scr-detail').style.display='none';document.getElementById('back-row').style.display='none';}
+
+const GCS_PED={eye:[{v:4,t:'4: 自然開眼'},{v:3,t:'3: 声かけで開眼'},{v:2,t:'2: 疼痛刺激で開眼'},{v:1,t:'1: 開眼なし'}],verbal:[{v:5,t:'5: 喃語・通常の啼泣'},{v:4,t:'4: 泣くが落ち着かせられる'},{v:3,t:'3: 刺激で泣く・うめく'},{v:2,t:'2: 刺激でうめく'},{v:1,t:'1: なし'}],motor:[{v:6,t:'6: 自発的な目的のある動き'},{v:5,t:'5: 触刺激で払いのける'},{v:4,t:'4: 疼痛で逃避（屈曲）'},{v:3,t:'3: 異常屈曲（除脳硬直様）'},{v:2,t:'2: 異常伸展（除脳硬直様）'},{v:1,t:'1: なし'}]};
+let gcsTab='adult';
+
+function showSpecialDetail(key){
+  const sc=SC[key];curAns=ST.scores[key]||{};
+  const tests=sc.tests;const done=Object.keys(curAns).length;const abnormal=Object.values(curAns).filter(v=>v>0).length;
+  let h=`<div class="ptitle">${sc.name}</div>`;
+  h+=`<div class="memo">${sc.memo}</div>`;
+  h+=`<div class="card"><div class="cb" style="padding:12px 16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:#636366">実施済み ${done}/${tests.length}項目</span><span style="font-size:12px;font-weight:600;color:${abnormal>0?'var(--red)':'var(--green)'}">異常 ${abnormal}項目</span></div><div class="pbar"><div class="pfill" style="width:${Math.round(done/tests.length*100)}%"></div></div></div></div>`;
+  h+=`<div class="card"><div class="cb" style="padding:4px 16px">`;
+  tests.forEach(t=>{
+    const label=t.label.replace(/\n/g,'／');const selV=curAns[t.id];
+    h+=`<div class="nrow"><div class="nq">${label}</div><div style="font-size:11px;color:#636366;margin-bottom:7px;line-height:1.5;background:#f9f9f9;border-radius:6px;padding:6px 8px">📋 ${t.sub}</div><div class="nopts">`;
+    t.opts.forEach(o=>{const isSel=selV===o.v;const isAbnormal=o.v>0;h+=`<div class="no${isSel?' sel':''}" onclick="setSpecial('${key}','${t.id}',${o.v})"><span>${isAbnormal?'⚠️ ':'✅ '}${o.t}</span></div>`;});
+    h+=`</div></div>`;
+  });
+  h+=`</div></div>`;
+  if(done>0){
+    const abnItems=tests.filter(t=>curAns[t.id]!==undefined&&curAns[t.id]>0).map(t=>{const opt=t.opts.find(o=>o.v===curAns[t.id]);return`${t.label.replace(/\n/g,'／')}: ${opt?opt.t:''}`;});
+    const interp=abnormal===0?{t:'全項目正常',c:'low'}:abnormal<=Math.ceil(tests.length/2)?{t:`${abnormal}項目で異常あり`,c:'mid'}:{t:`${abnormal}項目で異常あり（要注意）`,c:'high'};
+    h+=`<div class="card"><div class="cb" style="padding:12px 16px"><div class="scorebox"><div><div class="slbl">${sc.name}</div><div class="snum" style="color:var(--red)">${abnormal}<span style="font-size:16px;font-weight:400">／${tests.length}異常</span></div></div><span class="badge ${interp.c}">${interp.t}</span></div>${abnItems.length?`<div style="margin-top:10px;font-size:11px;color:#636366;line-height:1.8">異常項目：<br>${abnItems.join('<br>')}</div>`:''}</div></div>`;
+    const alerts=[];
+    if(key==='cerebellar'&&curAns['nystagmus']>=2)alerts.push('垂直または回旋眼振あり：中枢性（脳幹・小脳）病変を強く示唆。脳卒中との鑑別を優先してください。');
+    if(key==='hints'&&curAns['head_impulse']===0&&curAns['nystagmus_hints']>=1)alerts.push('Head Impulse正常＋方向変換性/垂直眼振：中枢性めまいのHINTS陽性パターン。脳幹・小脳梗塞を強く疑います。');
+    if(key==='hints'&&curAns['skew']===1)alerts.push('Skew deviation陽性：中枢性病変の強い示唆。緊急搬送を検討してください。');
+    if(key==='pupil'&&(curAns['light_r']===2||curAns['light_l']===2))alerts.push('対光反射消失：脳ヘルニア・脳幹障害の可能性。緊急対応が必要です。');
+    if(key==='pupil'&&curAns['anisocoria']===2)alerts.push('著明な瞳孔不同（2mm超）：動眼神経麻痺・テント切痕ヘルニアを疑います。');
+    if(key==='meningeal'&&(curAns['kernig']===1||curAns['brudzinski']===1))alerts.push('Kernig徴候またはBrudzinski徴候陽性：くも膜下出血・髄膜炎を疑います。');
+    if(key==='reflex'&&(curAns['babinski_r']===1||curAns['babinski_l']===1))alerts.push('Babinski反射陽性：錐体路障害（上位運動ニューロン障害）を示します。');
+    alerts.forEach(a=>{h+=`<div class="alrt ared">⚠️ ${a}</div>`;});
+  }
+  document.getElementById('scr-detail').innerHTML=h;
+  document.getElementById('scr-detail').style.display='';
+  document.getElementById('scr-list').style.display='none';
+  document.getElementById('back-row').style.display='';
+}
+
+function setSpecial(key,id,v){if(!ST.scores[key])ST.scores[key]={};ST.scores[key][id]=v;curAns=ST.scores[key];updSt();saveState();showSpecialDetail(key);}
+
+function showGcsDetail(){
+  const sc=SC['gcs'];curAns=ST.scores['gcs']||{};
+  const isPed=gcsTab==='ped';
+  const eyeOpts=sc.questions[0].opts;const verOpts=isPed?GCS_PED.verbal:sc.questions[1].opts;const motOpts=isPed?GCS_PED.motor:sc.questions[2].opts;
+  const tot=(curAns.eye||0)+(curAns.verbal||0)+(curAns.motor||0);const ip=Object.keys(curAns).length?sc.interp(tot):null;
+  let h=`<div class="ptitle">GCS</div>`;
+  h+=`<div class="memo">${sc.memo}</div>`;
+  h+=`<div style="display:flex;background:#fff;border-radius:10px;border:1px solid #e4e4e6;overflow:hidden;margin-bottom:10px;box-shadow:var(--shadow-sm)"><button onclick="switchGcsTab('adult')" style="flex:1;padding:10px;border:none;background:${!isPed?'var(--red)':'#fff'};color:${!isPed?'#fff':'#636366'};font-size:13px;font-weight:${!isPed?'600':'400'};cursor:pointer;border-radius:10px 0 0 10px">成人</button><button onclick="switchGcsTab('ped')" style="flex:1;padding:10px;border:none;background:${isPed?'var(--red)':'#fff'};color:${isPed?'#fff':'#636366'};font-size:13px;font-weight:${isPed?'600':'400'};cursor:pointer;border-radius:0 10px 10px 0">小児（乳幼児）</button></div>`;
+  if(isPed)h+=`<div style="background:#fff8f7;border:1px solid #f1948a;border-radius:10px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:#c0392b;line-height:1.5">⚠️ 小児GCSは乳幼児（言語未発達）向けの評価です。合計スコアの解釈は成人と同様（3〜15点）ですが、カットオフは年齢により異なります。</div>`;
+  const rows=[{id:'eye',label:sc.questions[0].label,sub:sc.questions[0].sub||'',opts:eyeOpts},{id:'verbal',label:sc.questions[1].label,sub:isPed?'乳幼児の言語反応（発語の代わりに泣き声・反応で評価）':sc.questions[1].sub||'',opts:verOpts},{id:'motor',label:sc.questions[2].label,sub:isPed?'乳幼児の運動反応（命令従命の代わりに自発動作で評価）':sc.questions[2].sub||'',opts:motOpts}];
+  h+=`<div class="card"><div class="cb" style="padding:4px 16px">`;
+  rows.forEach(row=>{
+    h+=`<div class="nrow"><div class="nq">${row.label}</div>`;
+    if(row.sub)h+=`<div style="font-size:11px;color:#636366;margin-bottom:7px;line-height:1.5;background:#f9f9f9;border-radius:6px;padding:6px 8px">📋 ${row.sub}</div>`;
+    h+=`<div class="nopts">`;
+    row.opts.forEach(o=>{const sel=curAns[row.id]===o.v;h+=`<div class="no${sel?' sel':''}" onclick="setGcs('${row.id}',${o.v})"><span>${o.t}</span><span class="ns">${o.v}点</span></div>`;});
+    h+=`</div></div>`;
+  });
+  h+=`</div></div>`;
+  if(ip){h+=`<div class="card"><div class="cb" style="padding:12px 16px"><div class="scorebox"><div><div class="slbl">GCS合計${isPed?' (小児)':''}</div><div class="snum" style="color:var(--red)">${tot}点</div><div style="font-size:11px;color:#636366;margin-top:2px">E${curAns.eye||'-'} V${curAns.verbal||'-'} M${curAns.motor||'-'}</div></div><span class="badge ${ip.c}">${ip.t}</span></div></div></div>`;}
+  document.getElementById('scr-detail').innerHTML=h;
+  document.getElementById('scr-detail').style.display='';
+  document.getElementById('scr-list').style.display='none';
+  document.getElementById('back-row').style.display='';
+}
+
+function switchGcsTab(tab){gcsTab=tab;showGcsDetail();}
+function setGcs(id,v){if(!ST.scores.gcs)ST.scores.gcs={};ST.scores.gcs[id]=v;curAns=ST.scores.gcs;updSt();saveState();const sugg=buildSuggestions('gcs',id,v);showSuggestionToast(sugg);showGcsDetail();}
+
+function showDetail(key){
+  curKey=key;
+  if(key==='gcs'){showGcsDetail();return;}
+  if(['cerebellar','hints','pupil','meningeal','reflex'].includes(key)){showSpecialDetail(key);return;}
+  const sc=SC[key];curAns=ST.scores[key]||{};
+  let h=`<div class="ptitle">${sc.name}</div>`;
+  if(sc.memo)h+=`<div class="memo">${sc.memo}</div>`;
+  if(sc.type==='pos'){
+    h+=`<div class="card"><div class="cb" style="padding:4px 16px">`;
+    sc.items.forEach(it=>{const v=curAns[it.id];h+=`<div class="orow"><div class="otitle">${it.label}</div><div class="osub">${it.sub}</div><div class="obtns"><button class="obtn" onclick="setPos('${key}','${it.id}',1)" style="background:${v===1?'var(--redl)':'#fff'};color:${v===1?'var(--red)':'#1c1c1e'};border-color:${v===1?'var(--red)':'#e0e0e0'};font-weight:${v===1?'600':'400'}">${it.pos}</button><button class="obtn" onclick="setPos('${key}','${it.id}',0)" style="background:${v===0?'var(--greenl)':'#fff'};color:${v===0?'#1e8449':'#1c1c1e'};border-color:${v===0?'#82e0aa':'#e0e0e0'};font-weight:${v===0?'600':'400'}">${it.neg}</button></div></div>`;});
+    const s=posCount(key,curAns);const ip=sc.interp(s);
+    h+=`</div></div><div class="card"><div class="cb" style="padding:12px 16px"><div class="scorebox"><div><div class="slbl">陽性項目数</div><div class="snum" style="color:var(--red)">${s} / ${sc.items.filter(i=>!i.noscore).length}</div></div><span class="badge ${ip.c}">${ip.t}</span></div></div></div>`;
+  } else if(key==='nihss'){
+    const tot=sc.questions.reduce((a,q)=>a+(curAns[q.id]??0),0);const done=sc.questions.filter(q=>curAns[q.id]!==undefined).length;
+    h+=`<div class="card"><div class="cb" style="padding:12px 16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:#636366">進捗 ${done}/${sc.questions.length}項目</span><span style="font-size:13px;font-weight:600">合計 ${tot}点</span></div><div class="pbar"><div class="pfill" style="width:${Math.round(done/sc.questions.length*100)}%"></div></div></div></div>`;
+    h+=`<div class="card"><div class="cb" style="padding:4px 16px">`;
+    sc.questions.forEach(q=>{h+=`<div class="nrow"><div class="nq">${q.label}</div>`;if(q.sub)h+=`<div style="font-size:11px;color:#636366;margin-bottom:7px;line-height:1.5;background:#f9f9f9;border-radius:6px;padding:6px 8px">📋 ${q.sub}</div>`;h+=`<div class="nopts">`;q.opts.forEach(o=>{const sel=curAns[q.id]===o.v;h+=`<div class="no${sel?' sel':''}" onclick="setNihss('${q.id}',${o.v})"><span>${o.t}</span><span class="ns">${o.v}点</span></div>`;});h+=`</div></div>`;});
+    const ip=sc.interp(tot);h+=`</div></div><div class="card"><div class="cb" style="padding:12px 16px"><div class="scorebox"><div><div class="slbl">NIHSS合計</div><div class="snum" style="color:var(--red)">${tot}点</div></div><span class="badge ${ip.c}">${ip.t}</span></div></div></div>`;
+  } else {
+    h+=`<div class="card"><div class="cb" style="padding:4px 16px">`;
+    sc.questions.forEach(q=>{h+=`<div class="nrow"><div class="nq">${q.label}</div><div class="nopts">`;q.opts.forEach(o=>{const sel=curAns[q.id]===o.v;h+=`<div class="no${sel?' sel':''}" onclick="setOther('${q.id}',${o.v})"><span>${o.t}</span><span class="ns">${o.v}点</span></div>`;});h+=`</div></div>`;});
+    const tot=calcScore(key);const ip=sc.interp(tot);h+=`</div></div><div class="card"><div class="cb" style="padding:12px 16px"><div class="scorebox"><div><div class="slbl">${sc.name} スコア</div><div class="snum" style="color:var(--red)">${tot}点</div></div><span class="badge ${ip.c}">${ip.t}</span></div></div></div>`;
+  }
+  document.getElementById('scr-detail').innerHTML=h;
+  document.getElementById('scr-detail').style.display='';
+  document.getElementById('scr-list').style.display='none';
+  document.getElementById('back-row').style.display='';
+}
+
+const CROSS_MAP=[
+  {from:{scale:'befast',id:'face',min:1},to:[{scale:'cpss',id:'face',val:1},{scale:'nihss',id:'4',val:1},{scale:'race',id:'face',val:1}]},
+  {from:{scale:'cpss',id:'face',min:1},to:[{scale:'befast',id:'face',val:1},{scale:'nihss',id:'4',val:1},{scale:'race',id:'face',val:1}]},
+  {from:{scale:'nihss',id:'4',min:1},to:[{scale:'befast',id:'face',val:1},{scale:'cpss',id:'face',val:1},{scale:'race',id:'face',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'race',id:'face',min:1},to:[{scale:'befast',id:'face',val:1},{scale:'cpss',id:'face',val:1},{scale:'nihss',id:'4',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'befast',id:'arm',min:1},to:[{scale:'cpss',id:'arm',val:1},{scale:'nihss',id:'5a',val:1},{scale:'nihss',id:'5b',val:1},{scale:'race',id:'arm',val:1}]},
+  {from:{scale:'cpss',id:'arm',min:1},to:[{scale:'befast',id:'arm',val:1},{scale:'nihss',id:'5a',val:1},{scale:'nihss',id:'5b',val:1},{scale:'race',id:'arm',val:1}]},
+  {from:{scale:'nihss',id:'5a',min:1},to:[{scale:'befast',id:'arm',val:1},{scale:'cpss',id:'arm',val:1},{scale:'race',id:'arm',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'nihss',id:'5b',min:1},to:[{scale:'befast',id:'arm',val:1},{scale:'cpss',id:'arm',val:1},{scale:'race',id:'arm',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'race',id:'arm',min:1},to:[{scale:'befast',id:'arm',val:1},{scale:'cpss',id:'arm',val:1},{scale:'nihss',id:'5a',val:(v)=>v>=2?2:1},{scale:'nihss',id:'5b',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'nihss',id:'6a',min:1},to:[{scale:'race',id:'leg',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'nihss',id:'6b',min:1},to:[{scale:'race',id:'leg',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'race',id:'leg',min:1},to:[{scale:'nihss',id:'6a',val:(v)=>v>=2?2:1},{scale:'nihss',id:'6b',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'befast',id:'speech',min:1},to:[{scale:'cpss',id:'speech',val:1},{scale:'nihss',id:'9',val:1},{scale:'nihss',id:'10',val:1}]},
+  {from:{scale:'cpss',id:'speech',min:1},to:[{scale:'befast',id:'speech',val:1},{scale:'nihss',id:'9',val:1},{scale:'nihss',id:'10',val:1}]},
+  {from:{scale:'nihss',id:'9',min:1},to:[{scale:'befast',id:'speech',val:1},{scale:'cpss',id:'speech',val:1}]},
+  {from:{scale:'nihss',id:'10',min:1},to:[{scale:'befast',id:'speech',val:1},{scale:'cpss',id:'speech',val:1}]},
+  {from:{scale:'nihss',id:'2',min:1},to:[{scale:'race',id:'gaze',val:1}]},
+  {from:{scale:'race',id:'gaze',min:1},to:[{scale:'nihss',id:'2',val:1}]},
+  {from:{scale:'befast',id:'eyes',min:1},to:[{scale:'nihss',id:'3',val:1}]},
+  {from:{scale:'nihss',id:'3',min:1},to:[{scale:'befast',id:'eyes',val:1}]},
+  {from:{scale:'nihss',id:'11',min:1},to:[{scale:'race',id:'neglect',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'race',id:'neglect',min:1},to:[{scale:'nihss',id:'11',val:(v)=>v>=2?2:1}]},
+  {from:{scale:'gcs',id:'eye',min:1,max:3},to:[{scale:'nihss',id:'1a',val:(v)=>v<=1?3:v<=2?2:1}]},
+  {from:{scale:'nihss',id:'1a',min:1},to:[{scale:'gcs',id:'eye',val:(v)=>v>=3?1:v>=2?2:3}]},
+];
+
+let pendingSuggestions=[];
+function resolveMapped(rule,inputVal){return typeof rule.val==='function'?rule.val(inputVal):rule.val;}
+function buildSuggestions(scale,id,val){
+  const suggestions=[];
+  CROSS_MAP.forEach(rule=>{
+    if(rule.from.scale!==scale||rule.from.id!==id)return;
+    if(val<rule.from.min)return;
+    rule.to.forEach(t=>{
+      const mapped=resolveMapped(t,val);const current=(ST.scores[t.scale]||{})[t.id];
+      if(current===mapped)return;
+      const scDef=SC[t.scale];if(!scDef)return;
+      let qLabel='',optLabel='';
+      if(scDef.items){const item=scDef.items.find(i=>i.id===t.id);qLabel=item?item.label:t.id;optLabel=mapped===1?item?.pos:item?.neg;}
+      else if(scDef.questions){const q=scDef.questions.find(q=>q.id===t.id);qLabel=q?q.label:t.id;const opt=q?.opts.find(o=>o.v===mapped);optLabel=opt?opt.t:`${mapped}点`;}
+      suggestions.push({scale:t.scale,id:t.id,val:mapped,scName:scDef.name,qLabel,optLabel});
+    });
+  });
+  return suggestions;
+}
+
+function showSuggestionToast(suggestions){
+  const old=document.getElementById('cross-toast');if(old)old.remove();
+  if(!suggestions.length)return;
+  pendingSuggestions=suggestions;
+  const toast=document.createElement('div');toast.id='cross-toast';
+  toast.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:90%;max-width:380px;background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.18);border:1.5px solid #e4e4e6;z-index:9999;overflow:hidden';
+  toast.innerHTML=`<div style="background:#1c1c1e;padding:10px 14px;display:flex;align-items:center;justify-content:space-between"><span style="color:#fff;font-size:13px;font-weight:600">🔗 他スケールに反映しますか？</span><button onclick="dismissToast()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:18px;cursor:pointer;padding:0 0 0 12px">✕</button></div><div style="padding:10px 14px;max-height:180px;overflow-y:auto">${suggestions.map((s,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0"><div><div style="font-size:11px;color:#636366">${s.scName}</div><div style="font-size:12px;font-weight:600;color:#1c1c1e">${s.qLabel}</div><div style="font-size:11px;color:var(--red)">${s.optLabel}</div></div><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="sug-${i}" checked style="width:16px;height:16px;accent-color:var(--red)"></label></div>`).join('')}</div><div style="display:flex;gap:8px;padding:10px 14px;background:#fafafa;border-top:1px solid #f0f0f0"><button onclick="applySelected()" style="flex:1;padding:10px;border-radius:9px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:600;cursor:pointer">選択して反映</button><button onclick="dismissToast()" style="flex:1;padding:10px;border-radius:9px;border:1.5px solid #e0e0e0;background:#fff;color:#636366;font-size:13px;cursor:pointer">反映しない</button></div>`;
+  document.body.appendChild(toast);
+}
+
+function applySelected(){pendingSuggestions.forEach((s,i)=>{const cb=document.getElementById(`sug-${i}`);if(!cb||!cb.checked)return;if(!ST.scores[s.scale])ST.scores[s.scale]={};ST.scores[s.scale][s.id]=s.val;});updSt();saveState();dismissToast();if(curKey)showDetail(curKey);}
+function dismissToast(){const t=document.getElementById('cross-toast');if(t)t.remove();pendingSuggestions=[];}
+
+function setPos(key,id,v){if(!ST.scores[key])ST.scores[key]={};ST.scores[key][id]=v;curAns=ST.scores[key];updSt();saveState();const sugg=buildSuggestions(key,id,v);showSuggestionToast(sugg);showDetail(key);}
+function setNihss(id,v){if(!ST.scores.nihss)ST.scores.nihss={};ST.scores.nihss[id]=v;curAns=ST.scores.nihss;updSt();saveState();const sugg=buildSuggestions('nihss',id,v);showSuggestionToast(sugg);showDetail('nihss');}
+function setOther(id,v){if(!ST.scores[curKey])ST.scores[curKey]={};ST.scores[curKey][id]=v;curAns=ST.scores[curKey];updSt();saveState();const sugg=buildSuggestions(curKey,id,v);showSuggestionToast(sugg);showDetail(curKey);}
+
+function posCount(k,a){const sc=SC[k];const skip=new Set(((sc&&sc.items)||[]).filter(i=>i.noscore).map(i=>i.id));return Object.entries(a).filter(([id,v])=>v===1&&!skip.has(id)).length;}
+function gcsDone(a){return !!(a&&a.eye&&a.verbal&&a.motor);}
+function calcScore(k){const sc=SC[k];const a=ST.scores[k]||{};if(sc.type==='pos')return posCount(k,a);if(sc.type==='single')return a[sc.questions[0].id]??0;if(k==='race'){return ['face','arm','leg','gaze'].reduce((s,id)=>s+(a[id]??0),0)+Math.max(a.aphasia??0,a.neglect??0);}return sc.questions.reduce((s,q)=>s+(a[q.id]??0),0);}
+
+function updSt(){
+  Object.keys(SC).forEach(k=>{
+    const el=document.getElementById('st-'+k);if(!el)return;
+    const a=ST.scores[k]||{};const sc=SC[k];
+    if(!Object.keys(a).length){el.textContent='未実施';el.className='ss undone';return;}
+    if(sc.tests){const abnormal=Object.values(a).filter(v=>v>0).length;const done=Object.keys(a).length;el.textContent=`✓ ${done}/${sc.tests.length}項目実施・異常${abnormal}項目`;el.className='ss '+(abnormal>0?'done':'undone');return;}
+    if(k==='gcs'&&!gcsDone(a)){el.textContent=`入力中（E${a.eye||'-'} V${a.verbal||'-'} M${a.motor||'-'}）`;el.className='ss undone';return;}
+    let s=(k==='gcs')?(a.eye+a.verbal+a.motor):calcScore(k);
+    el.textContent=`✓ ${s}点 — ${sc.interp(s).t}`;el.className='ss done';
+  });
+}
+
+function toggleTag(btn,id){btn.classList.toggle('on');if(btn.classList.contains('on'))ST.inq.tags[id]=true;else delete ST.inq.tags[id];saveState();}
+function toggleChk(id){const el=document.getElementById(id);const on=el.dataset.on==='1';el.dataset.on=on?'0':'1';el.style.background=on?'':'var(--red)';el.style.borderColor=on?'#c7c7cc':'var(--red)';el.innerHTML=on?'':`<span style="color:#fff;font-size:14px">✓</span>`;ST.inq.drugs[id]=!on;saveState();}
+function saveInq(){ST.inq.lkw=document.getElementById('lkw-time').value;ST.inq.found=document.getElementById('found-time').value;saveState();}
+function fmtDt(v){if(!v)return'';const d=new Date(v);const mo=d.getMonth()+1;const dd=d.getDate();const hh=String(d.getHours()).padStart(2,'0');const mm=String(d.getMinutes()).padStart(2,'0');return`${mo}月${dd}日 ${hh}:${mm}`;}
+
+function clinicalReason(){
+  const t=ST.inq.tags;const d=ST.inq.drugs;
+  const sx=k=>!!t[k];
+  const nihssA=ST.scores.nihss||{};const nihss=Object.keys(nihssA).length?calcScore('nihss'):null;
+  const raceA=ST.scores.race||{};const race=Object.keys(raceA).length?calcScore('race'):null;
+  const gcsA=ST.scores.gcs||{};const gcs=gcsDone(gcsA)?(gcsA.eye+gcsA.verbal+gcsA.motor):null;
+  const beFast=ST.scores.befast||{};const cpss=ST.scores.cpss||{};
+  const bfPos=posCount('befast',beFast);const cpssPos=posCount('cpss',cpss);
+  const sudden=sx('prog-sudden');const onset_act=sx('onset-act');const onset_rest=sx('onset-rest');const onset_sleep=sx('onset-sleep');
+  const headache=sx('sx-head');const neckpain=sx('sx-neckpain');const vomit=sx('sx-vomit');const seizure=sx('sx-seizure');const disturb=sx('sx-disturb');
+  const dizzy=sx('sx-dizzy');const diplopia=sx('sx-diplopia');const trauma=sx('sx-trauma');
+  const face=sx('sx-face');const arm=sx('sx-arm');const leg=sx('sx-leg');const speech=sx('sx-speech');const visual=sx('sx-visual');const ataxia=sx('sx-ataxia');
+  const af=sx('hx-af');const htn=sx('hx-htn');const dm=sx('hx-dm');const stroke=sx('hx-stroke');const tia=sx('hx-tia');const heart=sx('hx-heart');const hld=sx('hx-hld');const smoke=sx('hx-smoke');
+  const insulin=d['drug-insulin'];const warfarin=d['drug-warfarin'];const doac=d['drug-doac'];
+  const diseases=[
+    {name:'心原性脳塞栓症',icon:'🧠',calc:()=>{let s=0;const r=[];if(af){s+=35;r.push('心房細動あり（GL2025：CHADS2≥1でDOAC第一選択）');}if(heart){s+=15;r.push('心疾患あり');}if(sudden){s+=15;r.push('突発完成（心原性の典型経過）');}if(onset_act){s+=10;r.push('活動時発症');}if(bfPos>=1||cpssPos>=1){s+=10;r.push('スクリーニング陽性');}if(face||arm||leg){s+=10;r.push('片側麻痺あり');}if(nihss!==null&&nihss>=6){s+=10;r.push(`NIHSS ${nihss}点（血栓回収適応基準内）`);}if(race!==null&&race>=5&&af){s+=10;r.push('ELVOスクリーン陽性＋心房細動');}if(doac||warfarin){s-=10;r.push('抗凝固薬服用中（既治療の可能性）');}return{score:Math.min(Math.max(s,0),100),reasons:r};}},
+    {name:'アテローム血栓性脳梗塞',icon:'🧠',calc:()=>{let s=0;const r=[];if(htn){s+=20;r.push('高血圧あり（最大リスク因子）');}if(hld){s+=15;r.push('脂質異常症あり');}if(dm){s+=15;r.push('糖尿病あり');}if(smoke){s+=10;r.push('喫煙あり');}if(stroke||tia){s+=15;r.push('脳卒中/TIA既往（再発リスク高）');}if(onset_rest||onset_sleep){s+=10;r.push('安静時・起床時発症（典型的経過）');}if(face||arm||leg){s+=10;r.push('片側麻痺あり');}if(race!==null&&race>=5&&!af){s+=15;r.push('ELVOスクリーン陽性（大血管閉塞）');}else if(race!==null&&race>=5){s+=5;}return{score:Math.min(s,100),reasons:r};}},
+    {name:'ラクナ梗塞',icon:'🧠',calc:()=>{let s=0;const r=[];if(htn){s+=30;r.push('高血圧あり（穿通枝障害の主因）');}if(dm){s+=15;r.push('糖尿病あり');}if(nihss!==null&&nihss<=5){s+=20;r.push(`NIHSS ${nihss}点（軽症）`);}if((face||arm||leg)&&!speech&&!visual){s+=15;r.push('純粋運動麻痺パターン');}if(!headache&&!vomit){s+=10;r.push('頭痛・嘔吐なし');}if(onset_rest||onset_sleep){s+=10;r.push('安静時・起床時発症');}if(race!==null&&race>=5){s-=30;r.push('⚠️ ELVOスクリーン陽性（ラクナ梗塞では説明困難）');}return{score:Math.min(Math.max(s,0),100),reasons:r};}},
+    {name:'脳出血',icon:'🩸',calc:()=>{let s=0;const r=[];if(htn){s+=30;r.push('高血圧あり（最大リスク因子）');}if(headache&&sudden){s+=20;r.push('突然の頭痛');}if(vomit){s+=15;r.push('嘔吐あり（頭蓋内圧亢進）');}if(onset_act){s+=10;r.push('活動時発症');}if(disturb){s+=15;r.push('意識障害あり');}if(gcs!==null&&gcs<=12){s+=10;r.push(`GCS ${gcs}点（意識障害）`);}if(warfarin||doac){s+=10;r.push('抗凝固薬服用中（出血リスク増大）');}return{score:Math.min(s,100),reasons:r};}},
+    {name:'くも膜下出血',icon:'🩸',calc:()=>{let s=0;const r=[];if(headache&&sudden){s+=45;r.push('突然の激しい頭痛（thunderclap headache）');}if(neckpain){s+=20;r.push('頭頸部痛あり');}if(vomit&&headache){s+=15;r.push('頭痛＋嘔吐');}if(onset_act){s+=10;r.push('活動時発症');}if(disturb){s+=15;r.push('意識障害あり');}if(headache&&!face&&!arm&&!leg){s+=10;r.push('頭痛主体で局所神経症状なし');}if(seizure){s+=10;r.push('痙攣あり');}return{score:Math.min(s,100),reasons:r};}},
+    {name:'外傷性頭蓋内出血',icon:'🤕',calc:()=>{let s=0;const r=[];if(trauma){s+=50;r.push('転倒・外傷あり（最重要）');}if(disturb){s+=20;r.push('意識障害あり');}if(headache){s+=15;r.push('頭痛あり');}if(vomit){s+=10;r.push('嘔吐あり');}if(seizure){s+=10;r.push('痙攣あり');}if(warfarin||doac){s+=10;r.push('抗凝固薬服用中');}if(!trauma){s-=30;r.push('外傷の記載なし');}return{score:Math.min(Math.max(s,0),100),reasons:r};}},
+    {name:'TIA（一過性脳虚血発作）',icon:'⚡',calc:()=>{let s=0;const r=[];if(tia||stroke){s+=25;r.push('TIA/脳卒中既往あり（再発リスク高）');}if(af){s+=15;r.push('心房細動あり');}if(sudden){s+=15;r.push('突発完成（症状消失の可能性）');}if((bfPos>=1||cpssPos>=1)&&nihss!==null&&nihss<=5){s+=20;r.push('スクリーニング陽性かつNIHSS軽症');}return{score:Math.min(s,100),reasons:r};}},
+    {name:'低血糖',icon:'⚠️',calc:()=>{let s=0;const r=[];if(insulin){s+=45;r.push('インスリン/血糖降下薬服用中（必ず除外）');}if(dm){s+=20;r.push('糖尿病あり');}if(disturb){s+=15;r.push('意識障害あり');}if(seizure){s+=10;r.push('痙攣あり');}if(!insulin&&!dm&&(face||arm||leg)){s-=20;r.push('糖尿病・インスリン服用なし');}return{score:Math.min(Math.max(s,0),100),reasons:r};}},
+    {name:'てんかん・Todd麻痺',icon:'⚡',calc:()=>{let s=0;const r=[];if(seizure){s+=40;r.push('痙攣あり（最重要）');}if(stroke){s+=15;r.push('脳卒中既往（てんかん素因）');}if(disturb){s+=15;r.push('意識障害あり');}if(arm||leg){s+=10;r.push('四肢の麻痺あり（Todd麻痺の可能性）');}if(!seizure&&(bfPos>=1||cpssPos>=1)){s-=25;r.push('痙攣なし・スクリーニング陽性（脳卒中を優先）');}return{score:Math.min(Math.max(s,0),100),reasons:r};}},
+    {name:'前庭神経炎・BPPV',icon:'🌀',calc:()=>{let s=0;const r=[];const cpssOrBfPos=(bfPos>=1||cpssPos>=1);const focalNeuro=(face||arm||leg||speech||visual);if(cpssOrBfPos){s-=50;r.push('⚠️ スクリーニング陽性（BPPVの可能性は低い）');}if(focalNeuro){s-=40;r.push('⚠️ 局所神経症状あり（中枢性疾患を優先）');}if(!focalNeuro&&!cpssOrBfPos){if(dizzy){s+=35;r.push('めまいあり（主症状）');}if(ataxia){s+=25;r.push('運動失調あり');}if(vomit){s+=20;r.push('嘔吐あり');}if(!headache){s+=10;r.push('頭痛なし');}}return{score:Math.min(Math.max(s,0),100),reasons:r};}},
+    {name:'椎骨動脈解離',icon:'🧠',calc:()=>{let s=0;const r=[];if(neckpain){s+=35;r.push('頭頸部痛あり（椎骨動脈解離の重要な手がかり）');}if(dizzy){s+=20;r.push('めまいあり（後方循環障害）');}if(diplopia){s+=20;r.push('複視あり（脳幹・後方循環病変）');}if(ataxia){s+=20;r.push('運動失調あり（小脳病変）');}if(vomit){s+=10;r.push('嘔吐あり');}if(trauma){s+=15;r.push('外傷あり（頸部外傷後の解離に注意）');}return{score:Math.min(s,100),reasons:r};}},
+  ];
+  return diseases.map(d=>{const {score,reasons}=d.calc();return{...d,score,reasons};}).filter(d=>d.score>0).sort((a,b)=>b.score-a.score);
+}
+
+function renderSummary(){
+  const lines=[];
+  if(ST.inq.lkw)lines.push({k:'最終健常確認時刻（LKW）',v:fmtDt(ST.inq.lkw)});
+  if(ST.inq.found)lines.push({k:'発見時刻',v:fmtDt(ST.inq.found)});
+  const tm={'onset-act':'活動時発症','onset-rest':'安静時発症','onset-sleep':'起床時発症','onset-unk':'発症時刻不明','prog-sudden':'突発完成','prog-step':'段階的悪化','prog-improve':'改善傾向','sx-face':'顔面麻痺','sx-arm':'上肢麻痺','sx-leg':'下肢麻痺','sx-speech':'言語障害','sx-visual':'視野障害','sx-ataxia':'運動失調','sx-head':'頭痛','sx-neckpain':'頭頸部痛','sx-vomit':'嘔吐','sx-dizzy':'めまい','sx-diplopia':'複視','sx-seizure':'痙攣','sx-disturb':'意識障害','sx-trauma':'転倒・外傷','hx-stroke':'脳卒中既往','hx-tia':'TIA既往','hx-htn':'高血圧','hx-af':'心房細動','hx-dm':'糖尿病','hx-hld':'脂質異常症','hx-heart':'心疾患','hx-smoke':'喫煙','hx-surg':'3ヶ月以内手術','hx-bleed':'出血/外傷歴'};
+  const tags=Object.keys(ST.inq.tags).map(t=>tm[t]||t);
+  if(tags.length)lines.push({k:'症状・既往',v:tags.join('、')});
+  const drugs=[];if(ST.inq.drugs['drug-warfarin'])drugs.push('ワルファリン');if(ST.inq.drugs['drug-doac'])drugs.push('DOAC');if(ST.inq.drugs['drug-antiplatelet'])drugs.push('抗血小板薬');if(ST.inq.drugs['drug-insulin'])drugs.push('インスリン/血糖降下薬');
+  if(drugs.length)lines.push({k:'服薬',v:drugs.join('、')});
+  const results=[];
+  Object.keys(SC).forEach(k=>{
+    const a=ST.scores[k]||{};if(!Object.keys(a).length)return;const sc=SC[k];
+    if(k==='gcs'&&!gcsDone(a))return;
+    let s=(k==='gcs')?((a.eye||1)+(a.verbal||1)+(a.motor||1)):calcScore(k);
+    let detail='';
+    if(sc.type==='pos'&&sc.items){const posItems=sc.items.filter(it=>a[it.id]===1&&!it.noscore).map(it=>it.label.replace(/（.*?）/g,'').trim());if(posItems.length)detail+=`陽性: ${posItems.join('・')}`;}
+    else if(sc.type==='sum'&&sc.questions){if(k==='gcs'){const eOpt=sc.questions[0].opts.find(o=>o.v===(a.eye||1));const vOpt=sc.questions[1].opts.find(o=>o.v===(a.verbal||1));const mOpt=sc.questions[2].opts.find(o=>o.v===(a.motor||1));if(eOpt&&vOpt&&mOpt)detail=`E${a.eye||1} V${a.verbal||1} M${a.motor||1}`;}else{const abnormal=sc.questions.filter(q=>a[q.id]!==undefined&&a[q.id]>0).map(q=>{const opt=q.opts.find(o=>o.v===a[q.id]);return`${q.label}: ${opt?opt.t:''}`;});detail=abnormal.length?abnormal.join(' / '):'全項目正常';}}
+    else if(sc.type==='single'&&sc.questions){const opt=sc.questions[0].opts.find(o=>o.v===a[sc.questions[0].id]);if(opt)detail=opt.t;}
+    results.push({k:sc.name,v:`${s}点`,ip:sc.interp(s),detail});
+  });
+  let h='';
+  if(!lines.length&&!results.length){h=`<div class="card"><div class="cb" style="padding:40px 16px;text-align:center;color:#636366;font-size:14px;line-height:2">まだ評価が入力されていません。<br>各スケールを入力すると<br>ここに結果が表示されます。</div></div>`;}
+  else{
+    if(lines.length){h+=`<div class="card"><div class="ch">問診情報</div><div class="cb" style="padding:4px 16px">`;lines.forEach(l=>{h+=`<div class="smrow"><span class="smk">${l.k}</span><span class="smv">${l.v}</span></div>`;});h+=`</div></div>`;}
+    if(results.length){
+      h+=`<div class="card"><div class="ch">スケール結果</div><div class="cb" style="padding:4px 16px">`;
+      results.forEach(r=>{h+=`<div class="smrow" style="align-items:flex-start;padding:10px 0"><div style="flex:1;min-width:0"><div class="smk">${r.k}</div>${r.detail?`<div style="font-size:11px;color:#636366;margin-top:3px;line-height:1.5">${r.detail}</div>`:''}</div><div style="text-align:right;flex-shrink:0;margin-left:8px"><span class="smv">${r.v}</span><br><span class="badge ${r.ip.c}" style="font-size:11px;padding:3px 9px">${r.ip.t}</span></div></div>`;});
+      h+=`</div></div>`;
+      const ns=ST.scores.nihss&&Object.keys(ST.scores.nihss).length?calcScore('nihss'):null;const rs=ST.scores.race&&Object.keys(ST.scores.race).length?calcScore('race'):null;
+      h+=`<div class="card"><div class="ch">⚠️ 臨床判断補助</div><div class="cb" style="padding:12px 16px">`;let any=false;
+      if(ns!==null&&ns>=6){h+=`<div class="alrt ared">NIHSS ${ns}点：機械的血栓回収の適応基準（NIHSS≥6・mRS0-1・ASPECTS≥6・18歳以上・内頚/M1閉塞）を確認（GL2025 推奨度A）</div>`;any=true;}
+      if(ns!==null&&ns>=6&&rs!==null&&rs>=5){h+=`<div class="alrt ared">RACE≥5 + NIHSS≥6：ELVOの可能性。Mothership法を検討（GL2025 推奨度C）</div>`;any=true;}
+      else if(rs!==null&&rs>=5){h+=`<div class="alrt ared">ELVOスクリーン ${rs}点：主幹動脈閉塞疑い。血管内治療施設への直接搬送を検討（GL2025 推奨度C）</div>`;any=true;}
+      if(ST.inq.drugs['drug-doac']||ST.inq.drugs['drug-warfarin']){h+=`<div class="alrt ared">抗凝固薬服用中：rt-PA禁忌・慎重投与。出血合併時に中和薬投与を検討（推奨度B）</div>`;any=true;}
+      if(ST.inq.drugs['drug-insulin']){h+=`<div class="alrt ared">インスリン/血糖降下薬服用中：低血糖を必ず除外。血糖測定を優先</div>`;any=true;}
+      if(ns!==null&&ns<=5){h+=`<div class="alrt agreen">NIHSS ${ns}点（軽症）：GL2025では軽症脳梗塞（NIHSS≤5）に抗血小板薬を考慮する推奨が追加（推奨度C）</div>`;any=true;}
+      if(!any)h+=`<div style="font-size:13px;color:#636366">現時点で特記すべきアラートはありません。</div>`;
+      h+=`</div></div>`;
+    }
+  }
+  const hasAnyInput=lines.length>0||results.length>0;
+  if(hasAnyInput){
+    const diseases=clinicalReason();
+    if(diseases.length>0){
+      h+=`<div class="card"><div class="ch">🔬 臨床推論（疾患候補）</div><div class="cb" style="padding:4px 16px">`;
+      h+=`<div style="font-size:11px;color:#636366;padding:8px 0 4px;line-height:1.5">入力情報をもとにした<b>可能性スコア</b>（統計的確率ではありません）。高いほど入力情報との整合性が高いことを示します。</div>`;
+      diseases.forEach((d,i)=>{const pct=d.score;const col=pct>=70?'#c0392b':pct>=40?'#e67e22':'#27ae60';const rank=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';const dname=d.name.replace(/\n/g,'／');h+=`<div class="drow"><div class="drow-top"><span class="dname">${rank}${d.icon} ${dname}</span><span class="dpct" style="color:${col}">${pct}</span></div><div class="dbar-row"><div class="dbar-wrap"><div class="dbar-fill" style="width:${pct}%;background:${col}"></div></div></div><div class="dreason">${d.reasons.join('・')}</div></div>`;});
+      h+=`<div class="disclaimer">⚠️ このスコアは統計的確率ではなく、入力内容との整合性の目安です。確定診断は必ず医師が行います。</div>`;
+      h+=`</div></div>`;
+    }
+  }
+  document.getElementById('sum-content').innerHTML=h;
+}
+
+function showResetConfirm(){document.getElementById('reset-normal').style.display='none';document.getElementById('reset-confirm').style.display='';}
+function hideResetConfirm(){document.getElementById('reset-confirm').style.display='none';document.getElementById('reset-normal').style.display='';}
+function execReset(){
+  ST.scores={};ST.inq={tags:{},drugs:{},lkw:'',found:''};curKey=null;
+  document.getElementById('lkw-time').value='';document.getElementById('found-time').value='';
+  document.querySelectorAll('.tb').forEach(btn=>btn.classList.remove('on'));
+  ['drug-warfarin','drug-doac','drug-antiplatelet','drug-insulin'].forEach(id=>{const el=document.getElementById(id);if(el){el.dataset.on='0';el.style.background='';el.style.borderColor='#c7c7cc';el.innerHTML='';}});
+  updSt();hideResetConfirm();showPage('screening');
+}
+
+showPage('screening');
+updSt();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Background -->
+  <rect width="192" height="192" rx="38" fill="#c0392b"/>
+
+  <!-- Medical cross (center: 96,68 / 60×60 / arm 14px) -->
+  <rect x="66" y="64" width="60" height="14" rx="3" fill="white"/>
+  <rect x="89" y="38" width="14" height="60" rx="3" fill="white"/>
+
+  <!-- Pregnant woman silhouette (left) -->
+  <circle cx="30" cy="53" r="8" fill="white"/>
+  <path d="M24,61 L24,92 Q30,98 36,92 L36,86 C47,86 50,78 36,71 L36,61 Z" fill="white"/>
+
+  <!-- Brain (right, center ~162,70) -->
+  <path d="M152,71 Q151,62 157,60 Q161,58 163,63 Q165,58 169,60 Q174,62 173,71
+           Q175,77 173,82 Q171,87 167,86 Q164,89 162,87
+           Q159,89 157,86 Q152,84 151,79 Q150,74 152,71 Z" fill="white"/>
+  <line x1="162" y1="60" x2="162" y2="87" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Flame (below cross right) -->
+  <path d="M152,144
+    C143,140 140,129 145,117
+    C147,110 150,113 150,120
+    Q151,110 152,103
+    Q153,110 154,120
+    C154,113 157,110 159,117
+    C164,129 161,140 152,144 Z" fill="white"/>
+
+  <!-- ECG wave (baseline y=162) -->
+  <polyline
+    points="12,162 30,162 37,154 44,162 50,170 59,136 67,175 74,162 108,162 116,154 128,162 180,162"
+    fill="none" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

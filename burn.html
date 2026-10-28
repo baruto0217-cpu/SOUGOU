@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>熱傷面積計算アプリ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:#F5F4F0;color:#2C2C2A;font-size:16px}
+.app{max-width:480px;margin:0 auto;background:#F5F4F0;min-height:100vh}
+.tbar{display:flex;border-bottom:1px solid #D3D1C7;overflow-x:auto;background:#fff;-webkit-overflow-scrolling:touch;position:sticky;top:0;z-index:10}
+.tbar::-webkit-scrollbar{display:none}
+.tb{padding:12px 15px;font-size:13px;border:none;border-bottom:2px solid transparent;background:transparent;color:#5F5E5A;cursor:pointer;white-space:nowrap;margin-bottom:-1px;flex-shrink:0}
+.tb.on{color:#D85A30;border-bottom-color:#D85A30;font-weight:600}
+.pane{display:none;padding:14px 14px 40px}
+.pane.on{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mbtn{padding:13px 8px;font-size:14px;border:1px solid #D3D1C7;border-radius:10px;background:#fff;color:#5F5E5A;cursor:pointer;text-align:center;min-height:48px;font-weight:500}
+.mbtn.on{border-color:#D85A30;color:#D85A30;background:#FFF0EB}
+.card{background:#fff;border:1px solid #E8E6E0;border-radius:12px;padding:14px;margin-bottom:12px}
+.sh{font-size:11px;font-weight:600;color:#888780;letter-spacing:.06em;margin:14px 0 8px}
+.meth2{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #D3D1C7;border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fff}
+.m2b{padding:13px 8px;font-size:13px;border:none;background:transparent;color:#5F5E5A;cursor:pointer;text-align:center;min-height:48px;font-weight:500;line-height:1.35}
+.m2b.on{background:#FFF0EB;color:#D85A30;font-weight:600}
+.deg4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.db{padding:11px 4px;font-size:12px;border:1px solid #D3D1C7;border-radius:10px;background:#fff;color:#5F5E5A;cursor:pointer;text-align:center;min-height:52px;line-height:1.4;font-weight:500}
+.leg-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:#5F5E5A}
+.lsw{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
+.result-big{background:#fff;border:1px solid #E8E6E0;border-radius:12px;padding:16px;margin-bottom:10px}
+.rl{font-size:12px;color:#888780;margin-bottom:5px}
+.rv{font-size:36px;font-weight:600;color:#2C2C2A;line-height:1}
+.ru{font-size:15px;color:#888780;margin-left:4px}
+.mc2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mc{background:#fff;border:1px solid #E8E6E0;border-radius:10px;padding:11px 13px}
+.ml{font-size:11px;color:#888780;margin-bottom:4px}
+.mv{font-size:20px;font-weight:600;color:#2C2C2A}
+.mu{font-size:11px;color:#888780}
+.sbar-bg{height:7px;border-radius:4px;background:#E8E6E0;overflow:hidden;margin:8px 0 5px}
+.sbar{height:100%;border-radius:4px;transition:width .3s,background .3s}
+.slbl{font-size:13px;font-weight:600;margin-bottom:8px}
+.ai{font-size:13px;color:#5F5E5A;padding:8px 12px;border-left:3px solid #D3D1C7;margin-bottom:6px;line-height:1.6}
+.ai.w{border-left-color:#D85A30;color:#2C2C2A}
+.rbtn{display:block;width:100%;margin-top:12px;padding:14px;font-size:14px;cursor:pointer;border-radius:10px;border:1px solid #D3D1C7;background:#fff;color:#5F5E5A;min-height:48px;font-weight:500}
+.fn{font-size:11px;color:#888780;margin-top:8px;line-height:1.6}
+.pr{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #F1EFE8}
+.pr:last-child{border-bottom:none}
+.pdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.plbl{font-size:14px;color:#2C2C2A;flex:1;line-height:1.3}
+.psub{font-size:11px;color:#888780;margin-top:2px}
+.ppct{font-size:13px;font-weight:600;color:#2C2C2A;white-space:nowrap;margin-right:4px}
+.px{font-size:22px;color:#B4B2A9;cursor:pointer;padding:0 4px;line-height:1;min-width:32px;text-align:center}
+.inp{width:100%;font-size:15px;padding:13px 14px;border:1px solid #D3D1C7;border-radius:10px;background:#fff;color:#2C2C2A;-webkit-appearance:none}
+.inp:focus{outline:none;border-color:#D85A30}
+.d3btn{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.d3b{padding:13px 8px;font-size:13px;border:1px solid #D3D1C7;border-radius:10px;background:#fff;color:#5F5E5A;cursor:pointer;text-align:center;min-height:48px;font-weight:500}
+/* テンキー */
+.kp-btn{
+  padding:0;height:56px;font-size:20px;font-weight:600;
+  border:1px solid #E8E6E0;border-radius:12px;
+  background:#fff;color:#2C2C2A;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .08s;
+}
+.kp-btn:active{background:#F5F4F0;}
+.kp-del{background:#FFF0EB;color:#D85A30;border-color:#F5C4B3;font-size:22px;}
+.kp-del:active{background:#FAECE7;}background:#FFF0EB;border:1px solid #F5C4B3;border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:13px;color:#712B13;line-height:1.65}
+/* モーダルシート */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;border-radius:20px 20px 0 0;padding:20px 18px 36px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+.sheet-handle{width:40px;height:4px;background:#D3D1C7;border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:17px;font-weight:600;color:#2C2C2A;margin-bottom:3px}
+.sheet-sub{font-size:13px;color:#888780;margin-bottom:14px;line-height:1.5}
+.sheet-hint{font-size:12px;color:#5F5E5A;background:#F5F4F0;border-radius:8px;padding:9px 12px;margin-bottom:14px;line-height:1.6;border:1px solid #E8E6E0}
+.inp-lbl{font-size:12px;color:#888780;margin-bottom:6px;font-weight:500}
+.big-inp{width:100%;font-size:24px;font-weight:700;padding:14px;border:1px solid #D3D1C7;border-radius:10px;background:#fff;color:#2C2C2A;text-align:center;-webkit-appearance:none;margin-bottom:14px}
+.big-inp:focus{outline:none;border-color:#D85A30}
+.sheet-add{display:block;width:100%;padding:16px;font-size:16px;font-weight:700;cursor:pointer;border-radius:12px;border:none;background:#D85A30;color:#fff;min-height:52px;margin-top:14px}
+.sheet-del{display:block;width:100%;padding:14px;font-size:14px;cursor:pointer;border-radius:12px;border:1px solid #E24B4A;background:#FCEBEB;color:#A32D2D;min-height:48px;margin-top:8px;font-weight:600}
+.sheet-cancel{display:block;width:100%;padding:14px;font-size:14px;cursor:pointer;border-radius:12px;border:1px solid #D3D1C7;background:#fff;color:#5F5E5A;min-height:48px;margin-top:8px;font-weight:500}
+.sheet-err{font-size:13px;color:#A32D2D;margin-top:8px;display:none;padding:8px 10px;background:#FCEBEB;border-radius:8px}
+/* info */
+.ih{background:#FFF0EB;border-radius:12px;padding:16px;margin-bottom:14px}
+.ih-n{font-size:30px;font-weight:700;color:#D85A30;line-height:1}
+.ih-t{font-size:16px;font-weight:600;color:#2C2C2A;margin:5px 0 4px}
+.ih-d{font-size:13px;color:#5F5E5A;line-height:1.7}
+.ih-tag{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;margin-top:8px;font-weight:600;background:#FAECE7;color:#712B13}
+.si{display:flex;gap:13px;background:#fff;border:1px solid #E8E6E0;border-radius:12px;padding:13px;margin-bottom:8px}
+.sn{width:28px;height:28px;border-radius:50%;background:#D85A30;color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.st{font-size:14px;font-weight:600;color:#2C2C2A;margin-bottom:4px}
+.sd{font-size:13px;color:#5F5E5A;line-height:1.65}
+.tip{border-left:3px solid #D85A30;padding:11px 13px;margin-bottom:10px;background:#FFF8F5;border-radius:0 8px 8px 0}
+.tip h4{font-size:13px;font-weight:600;color:#2C2C2A;margin-bottom:5px}
+.tip p{font-size:13px;color:#5F5E5A;line-height:1.65}
+.dc{border:1px solid #E8E6E0;border-radius:12px;padding:15px;margin-bottom:10px;border-top-width:3px;background:#fff}
+.dc-t{font-size:15px;font-weight:600;margin-bottom:8px}
+.dc-r{font-size:13px;color:#5F5E5A;line-height:1.7;margin-bottom:3px}
+.dtag{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;margin-top:6px;font-weight:600}
+.dfig{padding:12px 12px 10px}
+.dfig-t{font-size:14px;font-weight:600;margin-bottom:6px}
+.dtbl-w{overflow-x:auto;margin-bottom:12px;border:1px solid #E8E6E0;border-radius:12px;background:#fff}
+.dtbl{width:100%;border-collapse:collapse;font-size:12px;line-height:1.5}
+.dtbl th{background:#F5F4F0;color:#5F5E5A;font-weight:600;padding:7px 5px;text-align:left;white-space:nowrap}
+.dtbl td{padding:8px 5px;border-top:1px solid #F1EFE8;vertical-align:top;color:#2C2C2A}
+.dtbl td:first-child{font-weight:700;white-space:nowrap}
+.dmsg{background:#FFF0EB;border:1px solid #F5C4B3;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#712B13;line-height:1.65}
+.dmsg-t{font-size:15px;font-weight:700;margin-bottom:2px}
+.bc{border:1px solid #E8E6E0;border-radius:12px;padding:15px;margin-bottom:12px;background:#fff}
+.bt{font-size:15px;font-weight:600;margin-bottom:8px}
+.bd{font-size:13px;color:#5F5E5A;line-height:1.65;margin-bottom:8px}
+.bf{background:#F5F4F0;border-radius:8px;padding:11px 14px;font-size:14px;font-family:monospace;margin:8px 0;overflow-x:auto;border:1px solid #E8E6E0}
+.btab{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.btab th{text-align:left;padding:7px 8px;color:#888780;font-weight:600;border-bottom:1px solid #E8E6E0}
+.btab td{padding:7px 8px;border-bottom:1px solid #F1EFE8}
+.btab tr:last-child td{border-bottom:none}
+.lw{overflow-x:auto;margin-bottom:10px}
+.lt{width:100%;border-collapse:collapse;font-size:12px;min-width:330px;background:#fff;border-radius:10px;overflow:hidden}
+.lt th{text-align:left;padding:7px 8px;color:#888780;font-weight:600;border-bottom:1px solid #E8E6E0;font-size:11px;background:#F5F4F0}
+.lt td{padding:7px 8px;border-bottom:1px solid #F1EFE8}
+.lt tr:last-child td{border-bottom:none}
+.lh{color:#D85A30;font-weight:600}
+.nb{background:#F5F4F0;border-radius:8px;padding:11px 13px;font-size:13px;color:#5F5E5A;line-height:1.65;margin-top:10px;border:1px solid #E8E6E0}
+.age-row{display:flex;align-items:center;gap:12px}
+.age-row label{font-size:14px;color:#5F5E5A;white-space:nowrap;font-weight:500}
+.age-row input{flex:1;height:36px}
+.age-val{font-size:15px;font-weight:600;min-width:40px;color:#2C2C2A}
+.nine-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F1EFE8}
+.nine-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="tbar">
+  <button class="tb on" onclick="showTab('calc',this)">計算</button>
+  <button class="tb" onclick="showTab('palm',this)">手掌法</button>
+  <button class="tb" onclick="showTab('depth',this)">熱傷の深度</button>
+  <button class="tb" onclick="showTab('bi',this)">BI・予後指数</button>
+  <button class="tb" onclick="showTab('nine',this)">９の法則</button>
+  <button class="tb" onclick="showTab('lund',this)">ランド・ブラウダー</button>
+</div>
+
+<div class="pane on" id="tab-calc">
+  <div class="g2">
+    <button class="mbtn on" id="ba" onclick="setMode('adult')">成人</button>
+    <button class="mbtn" id="bc2" onclick="setMode('child')">小児</button>
+  </div>
+  <div class="card" id="agep" style="display:none">
+    <div class="age-row">
+      <label>年齢</label>
+      <input type="range" id="agsl" min="0" max="18" value="5" step="1" oninput="onAge()">
+      <span class="age-val" id="agout">5歳</span>
+    </div>
+  </div>
+
+  <div class="meth2">
+    <button class="m2b on" id="mbody" onclick="setMeth('body')">人体図<br><span style="font-size:11px">部位タップで登録</span></button>
+    <button class="m2b" id="mpalm" onclick="setMeth('palm')">人体図<br><span style="font-size:11px">手掌法で面積入力</span></button>
+  </div>
+
+  <!-- 操作ガイド（常時表示） -->
+  <div style="background:#F5F4F0;border:1px solid #E8E6E0;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:13px;color:#5F5E5A;line-height:1.6">
+    <span id="guide-body">部位をタップすると登録シートが開きます。深度ボタンを先に選ぶと初期値として使われます。</span>
+    <span id="guide-palm" style="display:none">部位をタップするとシートが開きます。手掌1個 ≈ 1% として個数をそのまま入力できます。</span>
+  </div>
+
+  <!-- 深度ボタン（bodyモードのみ・任意） -->
+  <div class="deg4" id="deg-btns">
+    <button class="db on" id="d0" onclick="selDeg(0)">解除</button>
+    <button class="db" id="d1" onclick="selDeg(1)" style="border-color:#EF9F27;color:#854F0B">Ⅰ度<br><span style="font-size:10px;color:#888780">表皮</span></button>
+    <button class="db" id="d2" onclick="selDeg(2)" style="border-color:#D85A30;color:#712B13">Ⅱ度<br><span style="font-size:10px;color:#888780">真皮</span></button>
+    <button class="db" id="d3" onclick="selDeg(3)" style="border-color:#791F1F;color:#501313">Ⅲ度<br><span style="font-size:10px;color:#888780">全層</span></button>
+  </div>
+
+  <div id="figw" style="margin-bottom:8px"></div>
+
+  <div class="leg-row">
+    <div class="leg"><div class="lsw" style="background:#fff;border-color:#B4B2A9"></div>未選択</div>
+    <div class="leg"><div class="lsw" style="background:#FFF8E0;border-color:#EF9F27"></div>Ⅰ度</div>
+    <div class="leg"><div class="lsw" style="background:#F0997B;border-color:#D85A30"></div>Ⅱ度</div>
+    <div class="leg"><div class="lsw" style="background:#791F1F;border-color:#501313"></div>Ⅲ度</div>
+  </div>
+
+  <div class="sh">計算結果</div>
+  <div class="result-big">
+    <div class="rl">熱傷面積 TBSA（Ⅱ度＋Ⅲ度）</div>
+    <div><span class="rv" id="tbsav">0.0</span><span class="ru">%</span></div>
+  </div>
+  <div class="mc2">
+    <div class="mc"><div class="ml">Ⅰ度面積</div><div class="mv" id="v1">0.0<span class="mu">%</span></div></div>
+    <div class="mc"><div class="ml">Ⅱ度面積</div><div class="mv" id="v2">0.0<span class="mu">%</span></div></div>
+    <div class="mc"><div class="ml">Ⅲ度面積</div><div class="mv" id="v3">0.0<span class="mu">%</span></div></div>
+    <div class="mc"><div class="ml">全深度合計</div><div class="mv" id="va">0.0<span class="mu">%</span></div></div>
+  </div>
+  <div class="sbar-bg"><div class="sbar" id="sbar"></div></div>
+  <div class="slbl" id="slbl" style="color:#888780">－</div>
+  <div id="bibox"></div>
+  <div id="advbox" style="margin-top:10px"></div>
+  <button class="rbtn" onclick="resetAll()">リセット</button>
+  <div class="fn">※ 参考値です。必ず医師による診察・判断を受けてください。</div>
+  <div class="sh">選択部位の内訳</div>
+  <div class="card" id="plist">
+    <p style="font-size:13px;color:#888780">部位をタップして選択してください。</p>
+  </div>
+</div>
+
+<!-- ======== 登録シート（スライドアップ） ======== -->
+<div id="overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-end;justify-content:center">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+
+    <!-- 部位名 -->
+    <div class="sheet-title" id="sheet-name">部位名</div>
+    <div class="sheet-sub" id="sheet-def">既定値: —</div>
+
+    <!-- ① 深度選択 -->
+    <div class="inp-lbl" style="margin-top:4px">① 深度を選択</div>
+    <div class="d3btn" style="margin-top:0;margin-bottom:16px">
+      <button class="d3b" id="spd1" onclick="setSDeg(1)" style="border-color:#EF9F27;color:#854F0B">Ⅰ度（表皮）</button>
+      <button class="d3b" id="spd2" onclick="setSDeg(2)" style="border-color:#D85A30;color:#712B13">Ⅱ度（真皮）</button>
+      <button class="d3b" id="spd3" onclick="setSDeg(3)" style="grid-column:1/-1;border-color:#791F1F;color:#501313">Ⅲ度（全層）</button>
+    </div>
+
+    <!-- ② 面積入力（テンキー） -->
+    <div class="inp-lbl">② 面積（%）を入力　<span style="font-weight:400;color:#888780">空欄 → 既定値を使用</span></div>
+    <div id="kp-display" style="
+      width:100%;font-size:32px;font-weight:700;
+      padding:12px 18px;
+      border:1.5px solid #D3D1C7;border-radius:12px;
+      background:#F5F4F0;color:#B4B2A9;
+      text-align:right;margin-bottom:10px;
+      min-height:58px;letter-spacing:1px;
+      cursor:default;user-select:none;
+    ">—</div>
+
+    <!-- 登録ボタン（テンキーの上） -->
+    <button class="sheet-add" onclick="applySheet()" style="margin-bottom:8px">登録する</button>
+
+    <!-- 半分ボタン -->
+    <button class="kp-btn" onclick="kpHalf()" style="width:100%;margin-bottom:12px;font-size:14px;font-weight:600;color:#D85A30;border-color:#D85A30;background:#FFF0EB">½ 半分（最大値の50%）</button>
+
+    <!-- テンキー -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">
+      <button class="kp-btn" onclick="kpPress('7')">7</button>
+      <button class="kp-btn" onclick="kpPress('8')">8</button>
+      <button class="kp-btn" onclick="kpPress('9')">9</button>
+      <button class="kp-btn" onclick="kpPress('4')">4</button>
+      <button class="kp-btn" onclick="kpPress('5')">5</button>
+      <button class="kp-btn" onclick="kpPress('6')">6</button>
+      <button class="kp-btn" onclick="kpPress('1')">1</button>
+      <button class="kp-btn" onclick="kpPress('2')">2</button>
+      <button class="kp-btn" onclick="kpPress('3')">3</button>
+      <button class="kp-btn" onclick="kpPress('.')">．</button>
+      <button class="kp-btn" onclick="kpPress('0')">0</button>
+      <button class="kp-btn kp-del" onclick="kpDel()">⌫</button>
+    </div>
+    <div style="font-size:12px;color:#888780;text-align:right;margin-bottom:14px">手掌法：手掌の個数 ≈ %</div>
+
+    <input type="hidden" id="sheet-pct">
+
+    <!-- エラー -->
+    <div class="sheet-err" id="sheet-err"></div>
+
+    <!-- サブアクション -->
+    <button class="sheet-del" id="sheet-del" onclick="deleteSheet()" style="display:none">この部位の記録を削除する</button>
+    <button class="sheet-cancel" onclick="closeSheet()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ======== 情報タブ ======== -->
+<div class="pane" id="tab-palm">
+  <div class="ih"><div class="ih-n">1</div><div class="ih-t">手掌法（Palm Method）</div><div class="ih-d">患者自身の手掌（手のひら＋指5本を閉じた状態）が体表面積の約1%に相当します。散在した熱傷や小面積の評価に最も手軽な方法です。</div><span class="ih-tag">手掌 ≈ 1% TBSA</span></div>
+  <div class="si"><div class="sn">1</div><div><div class="st">患者の手を確認する</div><div class="sd">評価者ではなく患者自身の手掌を基準にします。指5本を閉じた状態（手掌＋指）が約1%です。</div></div></div>
+  <div class="si"><div class="sn">2</div><div><div class="st">熱傷部位に手掌を当てていく（イメージ）</div><div class="sd">患者の手掌サイズを頭の中でイメージしながら、熱傷部位が何手掌分に相当するか数えます。</div></div></div>
+  <div class="si"><div class="sn">3</div><div><div class="st">計算タブで「手掌法で面積入力」を選んで部位をタップ</div><div class="sd">人体図の部位をタップすると入力シートが開きます。手掌の個数をそのまま%として入力し、深度を選んで登録します。</div></div></div>
+  <div class="si"><div class="sn">4</div><div><div class="st">合計手掌数 ＝ TBSA%</div><div class="sd">数えた手掌数がそのままTBSA（%）になります。例：8手掌分 → 約8%。部位ごとに深度を分けて入力することで正確なBIも計算できます。</div></div></div>
+  <div class="tip"><h4>注意点</h4><p>手掌法は1〜2%程度の誤差が生じやすいため、広範囲の熱傷ではルールオブナインやランド・ブラウダー法と組み合わせます。体型（肥満・小児）によっても誤差が生じることがあります。</p></div>
+</div>
+
+<div class="pane" id="tab-nine">
+  <div class="ih"><div class="ih-n">2</div><div class="ih-t">ルールオブナイン（成人用）</div><div class="ih-d">体を9%または18%の区画に分割して面積を推定します。成人に適用し、迅速に計算できる標準的な方法です。</div><span class="ih-tag">成人のみ適用</span></div>
+  <div class="card" id="ninetbl"></div>
+  <div class="si"><div class="sn">1</div><div><div class="st">熱傷部位を確認する</div><div class="sd">全身をざっくり観察し、どの区画が熱傷を受けているか把握します。</div></div></div>
+  <div class="si"><div class="sn">2</div><div><div class="st">各区画の割合をあてはめる</div><div class="sd">部分的な熱傷はその割合で換算します（例：右大腿の半分 → 4.5%）。</div></div></div>
+  <div class="si"><div class="sn">3</div><div><div class="st">Ⅱ度＋Ⅲ度の合計がTBSA</div><div class="sd">Ⅰ度（発赤のみ）はTBSAに含めません。</div></div></div>
+  <div class="nb">ルールオブナインは成人（15歳以上）に使用します。小児ではランド・ブラウダー法を使ってください。</div>
+</div>
+
+<div class="pane" id="tab-lund">
+  <div class="ih"><div class="ih-n">3</div><div class="ih-t">ランド・ブラウダー法</div><div class="ih-d">年齢によって頭部と下肢の割合が変わる補正を加えた方法です。特に10歳未満の小児ではルールオブナインでは誤差が生じます。</div><span class="ih-tag">小児に必須・成人にも高精度</span></div>
+  <div class="nb" style="margin-bottom:12px">頭部は成長とともに全体比が下がり（0歳19%→成人7%）、大腿と下腿が占める割合が上がります。A・B・Cは標準チャートの「半分値」（A＝頭部の半分、B＝片側大腿の半分、C＝片側下腿の半分）で、下の表は部位全体の%で示しています。計算タブで年齢スライダーを動かすと自動補正されます。</div>
+  <div style="font-size:11px;color:#888780;margin-bottom:10px">出典：Lund CC, Browder NC. Surg Gynecol Obstet 1944;79:352-358</div>
+  <div class="lw"><table class="lt">
+    <tr><th>部位</th><th>0歳</th><th>1歳</th><th>5歳</th><th>10歳</th><th>15歳</th><th>成人</th></tr>
+    <tr><td>頭部(2A)</td><td class="lh">19</td><td class="lh">17</td><td class="lh">13</td><td class="lh">11</td><td class="lh">9</td><td>7</td></tr>
+    <tr><td>頸部</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td></tr>
+    <tr><td>体幹前面（胸・腹）</td><td>13</td><td>13</td><td>13</td><td>13</td><td>13</td><td>13</td></tr>
+    <tr><td>体幹後面（背）</td><td>13</td><td>13</td><td>13</td><td>13</td><td>13</td><td>13</td></tr>
+    <tr><td>臀部（左右計）</td><td>5</td><td>5</td><td>5</td><td>5</td><td>5</td><td>5</td></tr>
+    <tr><td>会陰部（外陰部）</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+    <tr><td>上腕（片側）</td><td>4</td><td>4</td><td>4</td><td>4</td><td>4</td><td>4</td></tr>
+    <tr><td>前腕（片側）</td><td>3</td><td>3</td><td>3</td><td>3</td><td>3</td><td>3</td></tr>
+    <tr><td>手（片側）</td><td>2.5</td><td>2.5</td><td>2.5</td><td>2.5</td><td>2.5</td><td>2.5</td></tr>
+    <tr><td>大腿(2B)（片側）</td><td class="lh">5.5</td><td class="lh">6.5</td><td class="lh">8</td><td class="lh">8.5</td><td class="lh">9</td><td>9.5</td></tr>
+    <tr><td>下腿(2C)（片側）</td><td class="lh">5</td><td class="lh">5</td><td class="lh">5.5</td><td class="lh">6</td><td class="lh">6.5</td><td>7</td></tr>
+    <tr><td>足（片側）</td><td>3.5</td><td>3.5</td><td>3.5</td><td>3.5</td><td>3.5</td><td>3.5</td></tr>
+    <tr style="font-weight:700;background:#F5F4F0"><td>合計</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td><td>100</td></tr>
+  </table></div>
+  <div class="nb" style="margin-top:12px">計算タブの人体図の区分に合わせ、体幹前面13%は胸・腹を6.5%ずつ、体幹後面13%は上背6.5%と腰背部（下背部6.5%＋臀部5%＝11.5%）に分けています。この内訳は便宜上の按分で、標準チャートの規定値ではありません。年齢の間は直線で補間します。</div>
+</div>
+
+<div class="pane" id="tab-depth">
+  <div class="card dfig">
+    <div class="dfig-t">熱傷の深さと皮膚の構造</div>
+    <svg viewBox="0 0 340 258" role="img" aria-label="皮膚の断面図。Ⅰ度は表皮まで、浅達性Ⅱ度は真皮の浅い層まで、深達性Ⅱ度は真皮の深い層まで、Ⅲ度は皮膚の全層に及び、皮下組織に及ぶこともある" style="width:100%;height:auto;display:block">
+      <!-- 層 -->
+      <rect x="62" y="44" width="274" height="16" fill="#F6D3C2"/>
+      <rect x="62" y="60" width="274" height="44" fill="#F3BFA8"/>
+      <rect x="62" y="104" width="274" height="60" fill="#EBA88E"/>
+      <rect x="62" y="164" width="274" height="58" fill="#FBE9B7"/>
+      <g fill="#F7DC94" opacity=".9"><circle cx="80" cy="190" r="11"/><circle cx="104" cy="200" r="10"/><circle cx="170" cy="186" r="10"/><circle cx="215" cy="203" r="11"/><circle cx="300" cy="190" r="12"/><circle cx="325" cy="206" r="9"/></g>
+      <g stroke="#FFFFFF" stroke-width="1" opacity=".8"><line x1="62" y1="60" x2="336" y2="60"/></g>
+      <g stroke="#B9775F" stroke-width="1" stroke-dasharray="3 3"><line x1="62" y1="104" x2="336" y2="104"/></g>
+      <line x1="62" y1="164" x2="336" y2="164" stroke="#B9775F" stroke-width="1"/>
+      <!-- 毛包・汗腺・血管 -->
+      <path d="M130 10 L132 44 M130 44 L130 150" stroke="#4A3B33" stroke-width="2" fill="none"/>
+      <ellipse cx="130" cy="152" rx="6" ry="8" fill="#6B4E3D"/>
+      <path d="M250 44 L250 140 q-8 4 0 8 q8 4 0 8 q-8 4 0 8" stroke="#5B8DB8" stroke-width="2" fill="none"/>
+      <path d="M190 164 q10 -18 20 0 M270 164 q10 -22 20 0" stroke="#C0392B" stroke-width="1.5" fill="none"/>
+      <!-- 左ラベル -->
+      <g font-size="10" fill="#2C2C2A" text-anchor="end">
+        <text x="56" y="56">表皮</text>
+        <text x="56" y="80">真皮</text><text x="56" y="92" font-size="9" fill="#5F5E5A">（浅層）</text>
+        <text x="56" y="132">真皮</text><text x="56" y="144" font-size="9" fill="#5F5E5A">（深層）</text>
+        <text x="56" y="196">皮下組織</text>
+      </g>
+      <!-- 深さの帯 -->
+      <g opacity=".88">
+        <rect x="82" y="44" width="34" height="16" rx="3" fill="#EF9F27"/>
+        <rect x="146" y="44" width="34" height="38" rx="3" fill="#D85A30"/>
+        <rect x="200" y="44" width="34" height="112" rx="3" fill="#993C1D"/>
+        <rect x="270" y="44" width="34" height="120" rx="3" fill="#501313"/>
+        <rect x="271" y="164" width="32" height="14" rx="3" fill="none" stroke="#501313" stroke-width="1.2" stroke-dasharray="3 2"/>
+      </g>
+      <!-- 上ラベル -->
+      <g font-size="11" font-weight="700" text-anchor="middle">
+        <text x="99" y="36" fill="#BA7517">Ⅰ度</text>
+        <text x="163" y="22" fill="#993C1D">浅達性</text><text x="163" y="36" fill="#993C1D">Ⅱ度</text>
+        <text x="217" y="22" fill="#712B13">深達性</text><text x="217" y="36" fill="#712B13">Ⅱ度</text>
+        <text x="287" y="36" fill="#501313">Ⅲ度</text>
+      </g>
+      <!-- 凡例 -->
+      <g font-size="9" fill="#5F5E5A">
+        <line x1="66" y1="249" x2="78" y2="249" stroke="#4A3B33" stroke-width="2"/><text x="81" y="252">毛包</text>
+        <line x1="112" y1="249" x2="124" y2="249" stroke="#5B8DB8" stroke-width="2"/><text x="127" y="252">汗腺</text>
+        <line x1="158" y1="249" x2="170" y2="249" stroke="#C0392B" stroke-width="1.5"/><text x="173" y="252">血管</text>
+        <text x="66" y="235">帯＝損傷が届く深さ（点線は及ぶことがある範囲）</text>
+      </g>
+    </svg>
+    <div class="fn">生き残った毛包・汗腺などがあれば、そこから表面の皮膚（上皮）が再生します。深い損傷ほど治りに時間がかかり、瘢痕（傷あと）を残しやすくなります。</div>
+  </div>
+
+  <div class="sh">見分け方の目安</div>
+  <div class="dtbl-w"><table class="dtbl">
+    <tr><th>深度</th><th>見た目</th><th>水疱</th><th>痛み</th><th>押したとき</th></tr>
+    <tr><td style="color:#BA7517">Ⅰ度</td><td>赤い（発赤）</td><td>なし</td><td>あり</td><td>白くなり、すぐ赤みが戻る</td></tr>
+    <tr><td style="color:#993C1D">浅達性<br>Ⅱ度</td><td>水疱の底が赤〜ピンク色</td><td>あり</td><td>強い</td><td>白くなり、すぐ赤みが戻る</td></tr>
+    <tr><td style="color:#712B13">深達性<br>Ⅱ度</td><td>水疱の底が白っぽい・まだら</td><td>あり</td><td>鈍い</td><td>白くなりにくい／ならない</td></tr>
+    <tr><td style="color:#501313">Ⅲ度</td><td>白・褐色・黒色、硬く革のよう</td><td>なし</td><td>ない※</td><td>色が変わらない</td></tr>
+  </table></div>
+  <div class="fn" style="margin:-6px 0 12px">所見を組み合わせて推定する目安です。水疱がまだできていない・破れていることや、深さが混在することもあります。深さを確かめるために水疱を破らないでください。※Ⅲ度でも周囲の浅い部分は痛むことがあります。</div>
+
+  <div class="dmsg"><div class="dmsg-t">熱傷は受傷後に深くなることがあります</div>受傷早期は、とくにⅡ度の深さの判定が難しく、時間をおいた再評価が必要です。迷うときは深い熱傷の可能性を考え、推定した深度と「判定に迷った」ことを記録・申し送ります。</div>
+  <div class="dc" style="border-top-color:#EF9F27"><div class="dc-t" style="color:#BA7517">Ⅰ度（表皮熱傷）</div><div class="dc-r"><strong>深さ：</strong>表皮のみの損傷</div><div class="dc-r"><strong>症状：</strong>発赤・疼痛・熱感。水疱は形成されない。</div><div class="dc-r"><strong>治癒：</strong>通常、数日で瘢痕を残さず治る。</div><div class="dc-r"><strong>医療機関での治療：</strong>冷却・保湿などの保存的治療。植皮は不要。</div><div class="dc-r"><strong>面積：</strong>熱傷面積（%TBSA）はⅡ度・Ⅲ度の合計で、Ⅰ度は含めない（Ⅰ度は参考として別表示）。</div><span class="dtag" style="background:#FAEEDA;color:#854F0B">瘢痕なし</span></div>
+  <div class="dc" style="border-top-color:#D85A30"><div class="dc-t" style="color:#993C1D">Ⅱ度浅達性（SDB）</div><div class="dc-r"><strong>深さ：</strong>真皮浅層まで</div><div class="dc-r"><strong>症状：</strong>水疱形成・強い疼痛・ピンク色の創面。</div><div class="dc-r"><strong>治癒：</strong>通常1〜2週間程度で上皮化。色素の変化を残すことがある。</div><div class="dc-r"><strong>医療機関での治療：</strong>保存的治療が中心（水疱の扱いは部位や状態で判断）。</div><span class="dtag" style="background:#FAECE7;color:#712B13">保存的治療</span></div>
+  <div class="dc" style="border-top-color:#993C1D"><div class="dc-t" style="color:#712B13">Ⅱ度深達性（DDB）</div><div class="dc-r"><strong>深さ：</strong>真皮深層まで</div><div class="dc-r"><strong>症状：</strong>水疱・知覚の低下・白っぽい〜まだらな創面。</div><div class="dc-r"><strong>治癒：</strong>上皮化に3〜4週間以上かかることが多く、瘢痕・拘縮を残しやすい。</div><div class="dc-r"><strong>医療機関での治療：</strong>植皮術などの外科的治療が検討されることが多い。</div><span class="dtag" style="background:#FAECE7;color:#712B13">植皮検討</span></div>
+  <div class="dc" style="border-top-color:#501313"><div class="dc-t" style="color:#501313">Ⅲ度（全層熱傷）</div><div class="dc-r"><strong>深さ：</strong>表皮・真皮の全層（皮下組織に及ぶこともある）</div><div class="dc-r"><strong>症状：</strong>創面は無痛（神経の破壊）。白色・褐色〜黒色の硬い革のような皮膚。周囲は痛むことがある。</div><div class="dc-r"><strong>治癒：</strong>自然には治りにくい（小範囲なら周囲から治ることもある）。</div><div class="dc-r"><strong>医療機関での治療：</strong>一般に壊死組織の除去と植皮などの外科的治療を検討。集中治療の要否は面積・気道損傷・全身状態などで判断。</div><span class="dtag" style="background:#FCEBEB;color:#791F1F">外科的治療を検討</span></div>
+  <div class="fn">出典：日本皮膚科学会「創傷・褥瘡・熱傷ガイドライン（2023）―6 熱傷診療ガイドライン（第3版）」、日本熱傷学会「熱傷診療ガイドライン〔改訂第3版〕」（2021）をもとに作成。図は模式図です。教育・訓練用の目安であり、診断に代わるものではありません。</div>
+</div>
+
+<div class="pane" id="tab-bi">
+  <div class="bc"><div class="bt">BI（Burn Index：熱傷指数）</div><div class="bd">Ⅱ度熱傷面積とⅢ度熱傷面積から予後を推定する指標です。</div><div class="bf">BI = Ⅲ度面積 + Ⅱ度面積 ÷ 2</div><table class="btab"><tr><th>BI</th><th>重症度</th><th>死亡率目安</th><th>対応</th></tr><tr><td>〜10</td><td style="color:#3B6D11;font-weight:600">軽症</td><td>極めて低い</td><td>外来・一般病棟</td></tr><tr><td>10〜20</td><td style="color:#BA7517;font-weight:600">中等症</td><td>低い</td><td>入院治療</td></tr><tr><td>20〜30</td><td style="color:#D85A30;font-weight:600">重症</td><td>10〜20%</td><td>熱傷専門施設</td></tr><tr><td>30〜40</td><td style="color:#993C1D;font-weight:600">最重症</td><td>30〜50%</td><td>ICU・集中治療</td></tr><tr><td>40〜</td><td style="color:#501313;font-weight:600">致死的</td><td>50%以上</td><td>救命処置優先</td></tr></table></div>
+  <div class="bc"><div class="bt">PBI（予後焼傷指数）</div><div class="bd">年齢とBIを組み合わせた予後指標です。高齢者の重症度評価に有用です。</div><div class="bf">PBI = BI + 年齢</div><table class="btab"><tr><th>PBI</th><th>予後</th></tr><tr><td>〜60</td><td style="color:#3B6D11;font-weight:600">救命の可能性が高い</td></tr><tr><td>60〜90</td><td style="color:#D85A30;font-weight:600">重篤・積極的治療が必要</td></tr><tr><td>90〜</td><td style="color:#501313;font-weight:600">救命困難な場合が多い</td></tr></table></div>
+  <div class="bc"><div class="bt">輸液蘇生（Parkland式）</div><div class="bd">TBSA 15%以上の熱傷では積極的な輸液蘇生が必要です。</div><div class="bf">輸液量 = 4 mL × 体重(kg) × TBSA(%)</div><div class="bd">最初の8時間に半量を投与し、残り16時間で残りを投与します。乳酸リンゲル液を使用。</div></div>
+</div>
+
+</div>
+
+<script>
+// ルールオブナイン正式値（合計100%）
+// 頭頸部9%: 頭部8% + 頸部1%
+// 上肢9%: 上腕4% + 前腕3% + 手2%
+// 下肢18%: 大腿9% + 下腿7% + 足部2%
+const PARTS=[
+  {id:'head',label:'頭部',pct:8,s:'head'},
+  {id:'neck',label:'頸部',pct:1,s:'neck'},
+  {id:'chest',label:'胸部（前）',pct:9,s:'chest'},
+  {id:'abdomen',label:'腹部（前）',pct:9,s:'abd'},
+  {id:'upper_back',label:'上背部（後）',pct:9,s:'ubk'},
+  {id:'lower_back',label:'腰背部（後）',pct:9,s:'lbk'},
+  {id:'perineum',label:'会陰部',pct:1,s:'peri'},
+  {id:'r_upper_arm',label:'右上腕',pct:4,s:'rua'},
+  {id:'l_upper_arm',label:'左上腕',pct:4,s:'lua'},
+  {id:'r_forearm',label:'右前腕',pct:3,s:'rfa'},
+  {id:'l_forearm',label:'左前腕',pct:3,s:'lfa'},
+  {id:'r_hand',label:'右手',pct:2,s:'rhd'},
+  {id:'l_hand',label:'左手',pct:2,s:'lhd'},
+  {id:'r_thigh',label:'右大腿',pct:9,s:'rth'},
+  {id:'l_thigh',label:'左大腿',pct:9,s:'lth'},
+  {id:'r_leg',label:'右下腿',pct:7,s:'rlg'},
+  {id:'l_leg',label:'左下腿',pct:7,s:'llg'},
+  {id:'r_foot',label:'右足部',pct:2,s:'rft'},
+  {id:'l_foot',label:'左足部',pct:2,s:'lft'},
+];
+// 特別部位（面積に関わらず専門医・熱傷センターへの紹介が必要な部位）
+// 出典：日本皮膚科学会「熱傷診療ガイドライン」表5（ABLS準拠）／米国熱傷学会(ABA)紹介基準
+// 注：人体図に独立した「関節部」区分がないため対象外（顔面は頭部で代用）
+const SPECIAL_SITES = {
+  head:     '頭部（顔面を含む）',
+  r_hand:   '右手',
+  l_hand:   '左手',
+  r_foot:   '右足部',
+  l_foot:   '左足部',
+  perineum: '会陰部',
+};
+const DF={0:'#FFFFFF',1:'#FFF8E0',2:'#F0997B',3:'#791F1F'};
+const DS={0:'#D3D1C7',1:'#EF9F27',2:'#D85A30',3:'#501313'};
+const DD={1:'#EF9F27',2:'#D85A30',3:'#791F1F'};
+const DL=['','Ⅰ度','Ⅱ度','Ⅲ度'];
+const DBG={0:'#F5F4F0',1:'#FAEEDA',2:'#FAECE7',3:'#FCEBEB'};
+const DTC={0:'#2C2C2A',1:'#854F0B',2:'#712B13',3:'#501313'};
+
+let mode='adult', age=5, curDeg=0, meth='body';
+let partDeg={};   // body mode: id -> 1|2|3
+let palmData={};  // palm mode: id -> {deg, pct}
+let sheetId=null, sheetDeg=2;
+
+// 9-table
+const NINE=[['頭部',  '8%'],['頸部','1%'],['胸部（前）','9%'],['腹部（前）','9%'],['上背部（後）','9%'],['腰背部（後）','9%'],['会陰部','1%'],['右上腕','4%'],['左上腕','4%'],['右前腕','3%'],['左前腕','3%'],['右手','2%'],['左手','2%'],['右大腿','9%'],['左大腿','9%'],['右下腿','7%'],['左下腿','7%'],['右足部','2%'],['左足部','2%']];
+document.getElementById('ninetbl').innerHTML=NINE.map(r=>`<div class="nine-row"><span style="font-size:14px">${r[0]}</span><span style="font-size:14px;font-weight:600;color:#D85A30">${r[1]}</span></div>`).join('');
+
+function showTab(t,btn){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+t).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo(0,0);
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('ba').classList.toggle('on',m==='adult');
+  document.getElementById('bc2').classList.toggle('on',m==='child');
+  document.getElementById('agep').style.display=m==='child'?'block':'none';
+  updateFigLabels();
+  calc();
+}
+function onAge(){
+  age=+document.getElementById('agsl').value;
+  document.getElementById('agout').textContent=age+'歳';
+  updateFigLabels();
+  calc();
+}
+function setMeth(m){
+  meth=m;
+  document.getElementById('mbody').classList.toggle('on',m==='body');
+  document.getElementById('mpalm').classList.toggle('on',m==='palm');
+  document.getElementById('deg-btns').style.display=m==='body'?'grid':'none';
+  document.getElementById('guide-body').style.display=m==='body'?'':'none';
+  document.getElementById('guide-palm').style.display=m==='palm'?'':'none';
+  refreshFig(); calc();
+}
+// ── ランド・ブラウダー法 ──
+// 出典: Lund CC, Browder NC. Surg Gynecol Obstet 1944;79:352-358
+// 各年齢チェックポイント間は線形補間
+const LB_TABLE = {
+  head:        [19,   17,   13,   11,   9,    7   ],
+  neck:        [2,    2,    2,    2,    2,    2   ],
+  chest:       [6.5,  6.5,  6.5,  6.5,  6.5,  6.5 ],
+  abdomen:     [6.5,  6.5,  6.5,  6.5,  6.5,  6.5 ],
+  upper_back:  [6.5,  6.5,  6.5,  6.5,  6.5,  6.5 ],
+  lower_back:  [11.5, 11.5, 11.5, 11.5, 11.5, 11.5],
+  perineum:    [1,    1,    1,    1,    1,    1   ],
+  r_upper_arm: [4,    4,    4,    4,    4,    4   ],
+  l_upper_arm: [4,    4,    4,    4,    4,    4   ],
+  r_forearm:   [3,    3,    3,    3,    3,    3   ],
+  l_forearm:   [3,    3,    3,    3,    3,    3   ],
+  r_hand:      [2.5,  2.5,  2.5,  2.5,  2.5,  2.5 ],
+  l_hand:      [2.5,  2.5,  2.5,  2.5,  2.5,  2.5 ],
+  r_thigh:     [5.5,  6.5,  8,    8.5,  9,    9.5 ],
+  l_thigh:     [5.5,  6.5,  8,    8.5,  9,    9.5 ],
+  r_leg:       [5,    5,    5.5,  6,    6.5,  7   ],
+  l_leg:       [5,    5,    5.5,  6,    6.5,  7   ],
+  r_foot:      [3.5,  3.5,  3.5,  3.5,  3.5,  3.5 ],
+  l_foot:      [3.5,  3.5,  3.5,  3.5,  3.5,  3.5 ],
+};
+// 注: 値は「部位全体」の%。標準チャートのA(頭)・B(大腿)・C(下腿)は半分値なので2倍して格納
+//     体幹は前面13+後面13。胸・腹=前面を半分ずつ、上背=後面の半分、腰背部=後面の半分+臀部(2.5×2)
+// チェックポイント年齢
+const LB_AGES = [0, 1, 5, 10, 15, 18];
+
+function getLB(id){
+  const row = LB_TABLE[id];
+  if(!row) return 0;
+  const a = Math.min(Math.max(age, 0), 18);
+  // 成人（18歳以上）
+  if(a >= 18) return row[5];
+  // チェックポイント間を線形補間
+  for(let i = 0; i < LB_AGES.length - 1; i++){
+    if(a >= LB_AGES[i] && a <= LB_AGES[i+1]){
+      const t = (a - LB_AGES[i]) / (LB_AGES[i+1] - LB_AGES[i]);
+      return Math.round((row[i] + t * (row[i+1] - row[i])) * 100) / 100;
+    }
+  }
+  return row[0];
+}
+function getPct(id){return mode==='adult'?(PARTS.find(p=>p.id===id)?.pct??0):getLB(id);}
+// 登録済みの深度を返す（未登録はnull）。palmData優先はcalc()と同じ扱い
+function getPartDeg(id){
+  if(palmData[id])return palmData[id].deg;
+  if(partDeg[id])return partDeg[id];
+  return null;
+}
+
+function selDeg(d){
+  curDeg=d;
+  [0,1,2,3].forEach(i=>{
+    const b=document.getElementById('d'+i);
+    const on=i===d;
+    b.style.background=on?DBG[i]:'#fff';
+    b.style.color=on?DTC[i]:(i===0?'#5F5E5A':['','#854F0B','#712B13','#501313'][i]);
+    b.style.borderColor=on?DS[i]:(i===0?'#D3D1C7':DS[i]);
+    b.style.fontWeight=on?'700':'500';
+  });
+}
+
+function tapPart(id){
+  openSheet(id);
+}
+
+// 部位ラベルのテキスト定義（部位名プレフィックスを持つ部位）
+const LABEL_PREFIX = {
+  neck:    '頸',
+  perineum:'会陰',
+  r_hand:  '右手',
+  l_hand:  '左手',
+  r_foot:  '右足',
+  l_foot:  '左足',
+};
+
+function fmtPct(v){
+  // 小数点以下の不要なゼロを除去（例：3.50→3.5、4.00→4）
+  return (Math.round(v*100)/100).toFixed(2).replace(/\.?0+$/,'')+'%';
+}
+
+function updateFigLabels(){
+  PARTS.forEach(p=>{
+    const el = document.getElementById('lbl-'+p.id);
+    if(!el) return;
+    const pct = getPct(p.id);
+    const str = fmtPct(pct);
+    // 部位名プレフィックスを持つ部位はプレフィックス+値、それ以外は値のみ
+    if(LABEL_PREFIX[p.id] !== undefined){
+      el.textContent = LABEL_PREFIX[p.id] + str;
+    } else {
+      el.textContent = str;
+    }
+  });
+}
+
+function refreshFig(){
+  PARTS.forEach(p=>{
+    let d=0;
+    if(meth==='body'){
+      // palmDataの修正があればそちらの深度を色に使う
+      d=palmData[p.id]?.deg ?? partDeg[p.id] ?? 0;
+    } else {
+      d=palmData[p.id]?.deg ?? 0;
+    }
+    ['f','b'].forEach(s=>{
+      const el=document.getElementById('fg-'+p.s+'-'+s);
+      if(el){el.style.fill=DF[d];el.style.stroke=DS[d];}
+    });
+  });
+  updateFigLabels();
+}
+
+// ── テンキー ──
+let kpVal = '';  // 現在入力中の文字列
+
+function kpRender(){
+  const el = document.getElementById('kp-display');
+  const max = sheetId ? getPct(sheetId) : null;
+  if(!kpVal) {
+    el.textContent = max !== null ? `最大 ${max.toFixed(1)}%` : '—';
+    el.style.color = '#B4B2A9';
+  } else {
+    el.textContent = kpVal + '%';
+    el.style.color = '#2C2C2A';
+  }
+  document.getElementById('sheet-pct').value = kpVal;
+}
+
+function kpPress(ch){
+  document.getElementById('sheet-err').style.display = 'none';
+  if(ch === '.'){
+    if(kpVal.includes('.')) return;
+    if(kpVal === '') kpVal = '0';
+  }
+  if(kpVal.length >= 5) return;
+  const next = kpVal + ch;
+  const max = sheetId ? getPct(sheetId) : 100;
+  if(parseFloat(next) > max){
+    // 上限超えはエラー表示してブロック
+    const err = document.getElementById('sheet-err');
+    err.textContent = `上限は ${max.toFixed(1)}% です（この部位の既定値）`;
+    err.style.display = 'block';
+    return;
+  }
+  kpVal = next;
+  kpRender();
+}
+
+function kpDel(){
+  kpVal = kpVal.slice(0, -1);
+  kpRender();
+}
+
+function kpHalf(){
+  // 現在部位の最大値の半分をセット
+  document.getElementById('sheet-err').style.display = 'none';
+  const max = sheetId ? getPct(sheetId) : 100;
+  const half = Math.round(max / 2 * 100) / 100;
+  // きれいな文字列に変換（例: 4.5 → "4.5"、4.0 → "4"）
+  kpVal = String(half).replace(/\.0+$/, '');
+  kpRender();
+}
+
+function kpSet(val){
+  // 既存値をテンキーにセット（シート開くとき）
+  if(val === null || val === undefined || val === '') {
+    kpVal = '';
+  } else {
+    // 末尾の余分な0を削る（例: "9.00" → "9"）
+    kpVal = String(parseFloat(val));
+    if(kpVal === 'NaN') kpVal = '';
+  }
+  kpRender();
+}
+function openSheet(id){
+  const part=PARTS.find(p=>p.id===id); if(!part)return;
+  sheetId=id;
+  const def=getPct(id);
+  const ex=palmData[id]||(partDeg[id]?{deg:partDeg[id],pct:def}:null);
+  document.getElementById('sheet-name').textContent=part.label;
+  document.getElementById('sheet-def').textContent=`上限: ${def.toFixed(1)}%（この部位の既定値・空欄で登録すると上限値が使われます）`;
+  document.getElementById('sheet-err').style.display='none';
+  document.getElementById('sheet-del').style.display=(ex||partDeg[id])?'block':'none';
+  if(ex){
+    sheetDeg=ex.deg;
+  } else if(curDeg>0){
+    sheetDeg=curDeg;
+  } else {
+    sheetDeg=2;
+  }
+  updateSDeg();
+  if(ex && Math.abs(ex.pct - def) > 0.01){
+    kpSet(ex.pct);
+  } else {
+    kpSet('');
+  }
+  document.getElementById('overlay').style.display='flex';
+}
+function closeSheet(){
+  document.getElementById('overlay').style.display='none';
+  sheetId=null;
+}
+function setSDeg(d){sheetDeg=d;updateSDeg();}
+function updateSDeg(){
+  [1,2,3].forEach(i=>{
+    const b=document.getElementById('spd'+i),on=i===sheetDeg;
+    b.style.background=on?DBG[i]:'#fff';
+    b.style.fontWeight=on?'700':'500';
+    b.style.color=on?DTC[i]:['','#854F0B','#712B13','#501313'][i];
+    b.style.borderWidth=on?'2px':'1px';
+    b.style.boxShadow=on?'inset 0 0 0 1px '+['','#EF9F27','#D85A30','#791F1F'][i]:'none';
+  });
+}
+function applySheet(){
+  const raw=document.getElementById('sheet-pct').value;
+  const err=document.getElementById('sheet-err');
+  const max=getPct(sheetId);
+  let pct;
+  if(raw===''||raw===null){
+    pct=max; // 空欄は既定値
+  } else {
+    pct=parseFloat(raw);
+    if(isNaN(pct)||pct<=0){
+      err.textContent='面積（%）を正しく入力してください';
+      err.style.display='block'; return;
+    }
+    if(pct>max){
+      err.textContent=`上限は ${max.toFixed(1)}% です（この部位の既定値）`;
+      err.style.display='block'; return;
+    }
+  }
+  // 常にpalmDataに保存（両モード共通で面積・深度の上書きを管理）
+  palmData[sheetId]={deg:sheetDeg,pct};
+  // bodyモードの場合はpartDegも深度に合わせて更新（人体図の色のため）
+  if(meth==='body') partDeg[sheetId]=sheetDeg;
+  closeSheet(); refreshFig(); calc();
+}
+function deleteSheet(){
+  delete palmData[sheetId];
+  // bodyモードではpartDegも消す
+  if(meth==='body') delete partDeg[sheetId];
+  closeSheet(); refreshFig(); calc();
+}
+
+function removePart(id){
+  delete partDeg[id];
+  delete palmData[id];
+  refreshFig(); calc();
+}
+
+function calc(){
+  let d1=0,d2=0,d3=0;
+  if(meth==='body'){
+    PARTS.forEach(p=>{
+      // palmData（修正値）があればそちらを優先、なければpartDeg＋既定値
+      if(palmData[p.id]){
+        const e=palmData[p.id];
+        if(e.deg===1)d1+=e.pct; else if(e.deg===2)d2+=e.pct; else d3+=e.pct;
+      } else if(partDeg[p.id]){
+        const d=partDeg[p.id],v=getPct(p.id);
+        if(d===1)d1+=v; else if(d===2)d2+=v; else d3+=v;
+      }
+    });
+  } else {
+    Object.entries(palmData).forEach(([id,e])=>{if(e.deg===1)d1+=e.pct;else if(e.deg===2)d2+=e.pct;else d3+=e.pct;});
+  }
+  const tbsa=d2+d3,all=d1+d2+d3,bi=d3+(d2/2);
+  document.getElementById('tbsav').textContent=tbsa.toFixed(1);
+  document.getElementById('v1').innerHTML=d1.toFixed(1)+'<span class="mu">%</span>';
+  document.getElementById('v2').innerHTML=d2.toFixed(1)+'<span class="mu">%</span>';
+  document.getElementById('v3').innerHTML=d3.toFixed(1)+'<span class="mu">%</span>';
+  document.getElementById('va').innerHTML=all.toFixed(1)+'<span class="mu">%</span>';
+  const sv=getSev(tbsa);
+  document.getElementById('sbar').style.width=Math.min(tbsa,100)+'%';
+  document.getElementById('sbar').style.background=tbsa>0?sv.c:'#D3D1C7';
+  document.getElementById('slbl').textContent=tbsa>0?sv.l:'－';
+  document.getElementById('slbl').style.color=tbsa>0?sv.c:'#888780';
+  const bb=document.getElementById('bibox');
+  if(all>0){const bs=getBiSev(bi);bb.innerHTML=`<div class="mc" style="margin-top:8px"><div class="ml">BI（熱傷指数）</div><div class="mv" style="color:${bs.c}">${bi.toFixed(1)}<span class="mu" style="color:${bs.c}"> ${bs.l}</span></div></div>`;}
+  else bb.innerHTML='';
+  renderAdv(tbsa,d3,all);renderPlist();
+}
+function getSev(t){
+  if(t<10)return{l:'軽症（TBSA 10%未満）',c:'#3B6D11'};
+  if(t<20)return{l:'中等症（10〜19%）',c:'#BA7517'};
+  if(t<30)return{l:'重症（20〜29%）',c:'#D85A30'};
+  return{l:'最重症（30%以上）',c:'#A32D2D'};
+}
+function getBiSev(b){
+  if(b<10)return{l:'軽症',c:'#3B6D11'};
+  if(b<20)return{l:'中等症',c:'#BA7517'};
+  if(b<30)return{l:'重症',c:'#D85A30'};
+  if(b<40)return{l:'最重症',c:'#993C1D'};
+  return{l:'致死的重症',c:'#501313'};
+}
+function renderAdv(tbsa,d3,all){
+  const box=document.getElementById('advbox');
+  if(all===0){box.innerHTML='';return;}
+  const it=[];
+  if(d3>0)it.push({t:'Ⅲ度熱傷あり：植皮術が必要です。専門医への紹介を検討してください。',w:true});
+
+  // 特別部位アラート：Ⅱ度以上で該当部位が登録されていれば、TBSAの大小に関わらず表示
+  const hitSpecial=Object.keys(SPECIAL_SITES).filter(id=>{const d=getPartDeg(id);return d===2||d===3;});
+  if(hitSpecial.length){
+    const names=hitSpecial.map(id=>SPECIAL_SITES[id]).join('・');
+    it.push({t:`特別部位熱傷（${names}）：面積に関わらず専門医・熱傷センターへの紹介が必要です（顔面・手・足・外陰部/会陰部・主要関節部が該当。関節部は本アプリの部位区分に未対応）。`,w:true});
+  }
+
+  // 顔面＋頸部の複合熱傷：気道浮腫による挿管困難リスク
+  const headDeg=getPartDeg('head'),neckDeg=getPartDeg('neck');
+  if((headDeg===2||headDeg===3)&&(neckDeg===2||neckDeg===3)){
+    it.push({t:'顔面・頸部の熱傷：気道浮腫により時間経過とともに挿管困難となるリスクがあります。気道熱傷の合併を疑い、早期の気道評価・予防的挿管を検討してください。',w:true});
+  }
+
+  if(tbsa>=15)it.push({t:'TBSA 15%以上：Parkland式輸液蘇生（4mL×体重×TBSA%）を開始してください。最初の8時間に半量投与。',w:true});
+  if(tbsa>=20)it.push({t:'TBSA 20%以上：熱傷専門施設への搬送を強く推奨します。',w:true});
+  if(tbsa>=30)it.push({t:'TBSA 30%以上：最重症です。ICU管理・救命処置が最優先です。',w:true});
+  if(mode==='child')it.push({t:'小児はランド・ブラウダー法で補正しています。',w:false});
+  box.innerHTML=it.map(i=>`<div class="ai${i.w?' w':''}">${i.t}</div>`).join('');
+}
+function renderPlist(){
+  const box=document.getElementById('plist');
+  let rows=[];
+  if(meth==='body'){
+    rows=PARTS.filter(p=>partDeg[p.id]||palmData[p.id]).map(p=>{
+      const hasCustom=!!palmData[p.id];
+      const deg=hasCustom?palmData[p.id].deg:partDeg[p.id];
+      const pct=hasCustom?palmData[p.id].pct:getPct(p.id);
+      const def=getPct(p.id);
+      const sub=hasCustom&&Math.abs(pct-def)>0.05?`修正済み（既定: ${def.toFixed(1)}%）`:null;
+      return{id:p.id,label:p.label,deg,pct,sub};
+    });
+  } else {
+    rows=PARTS.filter(p=>palmData[p.id]).map(p=>{
+      const e=palmData[p.id],def=getPct(p.id);
+      const sub=Math.abs(e.pct-def)>0.05?`手掌法入力値（既定: ${def.toFixed(1)}%）`:null;
+      return{id:p.id,label:p.label,deg:e.deg,pct:e.pct,sub};
+    });
+  }
+  if(!rows.length){box.innerHTML='<p style="font-size:13px;color:#888780">部位をタップして選択してください。</p>';return;}
+  box.innerHTML=rows.map(r=>`
+    <div class="pr" onclick="openSheet('${r.id}')" style="cursor:pointer">
+      <div class="pdot" style="background:${DD[r.deg]};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div class="plbl">${r.label} <span style="font-size:12px;color:#888780;font-weight:400">${DL[r.deg]}</span></div>
+        ${r.sub?`<div class="psub">${r.sub}</div>`:''}
+      </div>
+      <div class="ppct">${r.pct.toFixed(1)}%</div>
+      <div style="font-size:12px;color:#B4B2A9;padding:0 2px 0 6px">✎</div>
+      <div class="px" onclick="event.stopPropagation();removePart('${r.id}')">×</div>
+    </div>`).join('');
+}
+function resetAll(){partDeg={};palmData={};refreshFig();calc();}
+
+// ── SVG ──
+function buildFig(){
+  const c1=75,c2=225,sk='#FFFFFF',st='#D3D1C7';
+  function seg(pid,els){return`<g onclick="tapPart('${pid}')" style="cursor:pointer" onmouseenter="this.style.opacity='.72'" onmouseleave="this.style.opacity='1'">${els}</g>`;}
+  document.getElementById('figw').innerHTML=`<svg viewBox="0 0 300 375" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;touch-action:manipulation">
+${seg('head',`<ellipse id="fg-head-f" cx="${c1}" cy="34" rx="24" ry="27" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><ellipse id="fg-head-b" cx="${c2}" cy="34" rx="24" ry="27" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1}" y="29" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="sans-serif">頭部</text><text id="lbl-head" x="${c1}" y="42" text-anchor="middle" font-size="8.5" fill="#888780" font-family="sans-serif">8%</text>`)}
+${seg('neck',`<rect id="fg-neck-f" x="${c1-11}" y="62" width="22" height="13" rx="4" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-neck-b" x="${c2-11}" y="62" width="22" height="13" rx="4" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text id="lbl-neck" x="${c1}" y="72" text-anchor="middle" font-size="7.5" fill="#888780" font-family="sans-serif">頸1%</text>`)}
+${seg('chest',`<rect id="fg-chest-f" x="${c1-29}" y="77" width="58" height="46" rx="5" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1}" y="99" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="sans-serif">胸部</text><text id="lbl-chest" x="${c1}" y="112" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">9%</text>`)}
+${seg('abdomen',`<rect id="fg-abd-f" x="${c1-29}" y="125" width="58" height="46" rx="5" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1}" y="147" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="sans-serif">腹部</text><text id="lbl-abdomen" x="${c1}" y="160" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">9%</text>`)}
+${seg('upper_back',`<rect id="fg-ubk-b" x="${c2-29}" y="77" width="58" height="46" rx="5" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c2}" y="99" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="sans-serif">上背部</text><text id="lbl-upper_back" x="${c2}" y="112" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">9%</text>`)}
+${seg('lower_back',`<rect id="fg-lbk-b" x="${c2-29}" y="125" width="58" height="46" rx="5" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c2}" y="147" text-anchor="middle" font-size="9" fill="#5F5E5A" font-family="sans-serif">腰背部</text><text id="lbl-lower_back" x="${c2}" y="160" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">9%</text>`)}
+${seg('perineum',`<ellipse id="fg-peri-f" cx="${c1}" cy="181" rx="11" ry="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text id="lbl-perineum" x="${c1}" y="184" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">会陰1%</text>`)}
+${seg('r_upper_arm',`<rect id="fg-rua-f" x="${c1-51}" y="77" width="18" height="52" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-rua-b" x="${c2+33}" y="77" width="18" height="52" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1-42}" y="103" text-anchor="middle" font-size="7.5" fill="#5F5E5A" font-family="sans-serif">右上腕</text><text id="lbl-r_upper_arm" x="${c1-42}" y="115" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">4%</text>`)}
+${seg('l_upper_arm',`<rect id="fg-lua-f" x="${c1+33}" y="77" width="18" height="52" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-lua-b" x="${c2-51}" y="77" width="18" height="52" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1+42}" y="103" text-anchor="middle" font-size="7.5" fill="#5F5E5A" font-family="sans-serif">左上腕</text><text id="lbl-l_upper_arm" x="${c1+42}" y="115" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">4%</text>`)}
+${seg('r_forearm',`<rect id="fg-rfa-f" x="${c1-52}" y="132" width="16" height="42" rx="6" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-rfa-b" x="${c2+36}" y="132" width="16" height="42" rx="6" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1-44}" y="154" text-anchor="middle" font-size="7.5" fill="#5F5E5A" font-family="sans-serif">右前腕</text><text id="lbl-r_forearm" x="${c1-44}" y="165" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">3%</text>`)}
+${seg('l_forearm',`<rect id="fg-lfa-f" x="${c1+36}" y="132" width="16" height="42" rx="6" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-lfa-b" x="${c2-52}" y="132" width="16" height="42" rx="6" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1+44}" y="154" text-anchor="middle" font-size="7.5" fill="#5F5E5A" font-family="sans-serif">左前腕</text><text id="lbl-l_forearm" x="${c1+44}" y="165" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">3%</text>`)}
+${seg('r_hand',`<ellipse id="fg-rhd-f" cx="${c1-46}" cy="185" rx="12" ry="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><ellipse id="fg-rhd-b" cx="${c2+46}" cy="185" rx="12" ry="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text id="lbl-r_hand" x="${c1-46}" y="188" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">右手2%</text>`)}
+${seg('l_hand',`<ellipse id="fg-lhd-f" cx="${c1+46}" cy="185" rx="12" ry="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><ellipse id="fg-lhd-b" cx="${c2-46}" cy="185" rx="12" ry="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text id="lbl-l_hand" x="${c1+46}" y="188" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">左手2%</text>`)}
+${seg('r_thigh',`<rect id="fg-rth-f" x="${c1-31}" y="196" width="27" height="62" rx="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-rth-b" x="${c2-31}" y="196" width="27" height="62" rx="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1-17}" y="228" text-anchor="middle" font-size="8.5" fill="#5F5E5A" font-family="sans-serif">右大腿</text><text id="lbl-r_thigh" x="${c1-17}" y="240" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">9%</text>`)}
+${seg('l_thigh',`<rect id="fg-lth-f" x="${c1+4}" y="196" width="27" height="62" rx="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-lth-b" x="${c2+4}" y="196" width="27" height="62" rx="8" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1+17}" y="228" text-anchor="middle" font-size="8.5" fill="#5F5E5A" font-family="sans-serif">左大腿</text><text id="lbl-l_thigh" x="${c1+17}" y="240" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">9%</text>`)}
+${seg('r_leg',`<rect id="fg-rlg-f" x="${c1-31}" y="262" width="26" height="56" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-rlg-b" x="${c2-31}" y="262" width="26" height="56" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1-18}" y="291" text-anchor="middle" font-size="8.5" fill="#5F5E5A" font-family="sans-serif">右下腿</text><text id="lbl-r_leg" x="${c1-18}" y="303" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">7%</text>`)}
+${seg('l_leg',`<rect id="fg-llg-f" x="${c1+5}" y="262" width="26" height="56" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><rect id="fg-llg-b" x="${c2+5}" y="262" width="26" height="56" rx="7" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text x="${c1+18}" y="291" text-anchor="middle" font-size="8.5" fill="#5F5E5A" font-family="sans-serif">左下腿</text><text id="lbl-l_leg" x="${c1+18}" y="303" text-anchor="middle" font-size="8" fill="#888780" font-family="sans-serif">7%</text>`)}
+${seg('r_foot',`<ellipse id="fg-rft-f" cx="${c1-18}" cy="330" rx="17" ry="9" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><ellipse id="fg-rft-b" cx="${c2-18}" cy="330" rx="17" ry="9" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text id="lbl-r_foot" x="${c1-18}" y="333" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">右足2%</text>`)}
+${seg('l_foot',`<ellipse id="fg-lft-f" cx="${c1+18}" cy="330" rx="17" ry="9" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><ellipse id="fg-lft-b" cx="${c2+18}" cy="330" rx="17" ry="9" fill="${sk}" stroke="${st}" stroke-width="1.5" style="transition:fill .15s,stroke .15s"/><text id="lbl-l_foot" x="${c1+18}" y="333" text-anchor="middle" font-size="7" fill="#888780" font-family="sans-serif">左足2%</text>`)}
+<text x="${c1}" y="358" text-anchor="middle" font-size="10" fill="#888780" font-family="sans-serif">前面</text>
+<text x="${c2}" y="358" text-anchor="middle" font-size="10" fill="#888780" font-family="sans-serif">後面</text>
+<line x1="150" y1="6" x2="150" y2="348" stroke="#E8E6E0" stroke-width="1" stroke-dasharray="4,3"/>
+</svg>`;
+}
+
+buildFig(); selDeg(0); updateSDeg(); updateFigLabels(); calc();
+
+// overlay：外側タップで閉じる
+document.getElementById('overlay').addEventListener('click', function(e){
+  if(e.target === this) closeSheet();
+});
+</script>
+</body>
+</html>

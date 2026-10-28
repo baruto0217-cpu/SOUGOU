@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Obs Emergency PRO</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;
+  --text:#0f172a;--text2:#64748b;--text3:#94a3b8;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.2);
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'SF Mono','Fira Code',monospace;
+  --radius-md:8px;--radius-lg:14px;--radius-xl:20px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1e293b;--bg2:#0f172a;--bg3:#020617;
+    --text:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+  }
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--font);background:var(--bg3);color:var(--text);font-size:16px;}
+.app{height:100vh;height:100dvh;display:flex;flex-direction:column;max-width:640px;margin:0 auto;position:relative;}
+/* Nav */
+.nav{background:var(--bg);border-bottom:0.5px solid var(--border);display:flex;flex-shrink:0;}
+.nav button{flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:none;border-bottom:2px solid transparent;color:var(--text2);transition:all .2s;font-family:var(--font);}
+.nav button.active{color:#dc2626;border-bottom-color:#dc2626;background:rgba(220,38,38,0.04);}
+/* Main */
+.main{flex:1;overflow-y:auto;padding:14px 14px 140px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
+/* Cards */
+.card{background:var(--bg);border-radius:var(--radius-xl);padding:18px;border:0.5px solid var(--border);}
+/* Labels */
+.label{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.14em;font-family:var(--mono);}
+/* Weeks display */
+.weeks-num{font-size:50px;font-weight:700;line-height:1;color:var(--text);}
+.weeks-unit{font-size:18px;color:var(--text3);}
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+/* Inputs */
+input[type=date],input[type=number]{
+  width:100%;padding:10px 12px;background:var(--bg2);
+  border:0.5px solid var(--border);border-radius:var(--radius-md);
+  font-size:12px;font-weight:600;outline:none;color:var(--text);
+  font-family:var(--font);
+}
+input[type=date]:focus,input[type=number]:focus{border-color:#dc2626;}
+input[type=number]{text-align:center;font-size:28px;padding:14px;font-family:var(--mono);}
+/* Range */
+input[type=range]{width:100%;height:6px;border-radius:3px;appearance:none;outline:none;border:none;background:var(--bg3);}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.2);}
+#rangeW::-webkit-slider-thumb{background:#dc2626;}
+#rangeD::-webkit-slider-thumb{background:#2563eb;}
+/* SI box */
+.si-box{padding:14px 18px;border-radius:var(--radius-lg);display:flex;justify-content:space-between;align-items:center;background:var(--bg2);transition:background .4s;}
+.si-box.danger{background:#fef2f2;}
+.si-num{font-size:38px;font-weight:700;font-family:var(--mono);}
+/* Symptom buttons */
+.sym-group{display:flex;flex-direction:column;gap:7px;}
+.sym-group-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;display:flex;align-items:center;gap:5px;font-family:var(--mono);}
+.sym-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:var(--radius-lg);border:1.5px solid var(--border);background:var(--bg);cursor:pointer;text-align:left;transition:all .15s;font-family:var(--font);}
+.sym-btn:active{transform:scale(0.98);}
+.sym-btn.on-red{background:#fff5f5;border-color:#f87171;color:#991b1b;}
+.sym-btn.on-blue{background:#eff6ff;border-color:#60a5fa;color:#1e3a8a;}
+.sym-btn.on-purple{background:#faf5ff;border-color:#c084fc;color:#581c87;}
+.sym-btn.on-orange{background:#fff7ed;border-color:#fb923c;color:#7c2d12;}
+.sym-label{font-size:12px;font-weight:600;display:block;color:inherit;}
+.sym-sub{font-size:10px;opacity:0.6;display:block;margin-top:2px;font-weight:500;}
+.check-icon{width:20px;height:20px;border-radius:50%;background:#dc2626;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* Facility card */
+.facility-card{padding:18px 22px;border-radius:22px;border-left:8px solid;display:flex;flex-direction:column;gap:6px;transition:all .4s;}
+.facility-name{font-size:18px;font-weight:700;line-height:1.3;}
+.facility-reason{font-size:12px;font-weight:500;opacity:0.85;}
+/* Red flag */
+.redflag-card{background:#fff5f5;border-radius:20px;padding:14px;border:0.5px solid #fca5a5;}
+.redflag-item{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:11px 13px;border-radius:11px;border:0.5px solid #fca5a5;font-size:13px;font-weight:600;color:#7f1d1d;cursor:pointer;margin-bottom:5px;transition:all .15s;font-family:var(--font);}
+.redflag-item:active{transform:scale(0.98);}
+/* Watchlist */
+.watchlist-item{border-radius:var(--radius-lg);border:1.5px solid var(--border);overflow:hidden;margin-bottom:6px;transition:border-color .2s;}
+.watchlist-item.active{border-color:#ef4444;}
+.watchlist-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:none;border:none;cursor:pointer;text-align:left;font-family:var(--font);}
+.watchlist-dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.watchlist-dot.active{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,0.5);}
+.watchlist-detail{padding:12px 14px;border-top:0.5px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.detail-sec{border-radius:10px;padding:10px 12px;}
+/* Reference */
+.ref-card{background:var(--bg);border-radius:var(--radius-xl);padding:16px;border:0.5px solid var(--border);margin-bottom:12px;}
+.ref-title{font-size:15px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+/* Footer */
+.footer{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;display:flex;border-top:0.5px solid rgba(255,255,255,0.15);z-index:120;transition:background .4s;padding-bottom:env(safe-area-inset-bottom);}
+.footer-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px 14px;}
+.footer-item:first-child{border-right:0.5px solid rgba(255,255,255,0.15);}
+.footer-sublabel{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;opacity:0.5;margin-bottom:3px;font-family:var(--mono);}
+.footer-value{font-size:13px;font-weight:600;color:#fff;}
+/* Period badge */
+.period-badge{padding:5px 11px;border-radius:11px;font-size:11px;font-weight:700;}
+/* SI grade badges */
+.si-badge{font-size:10px;font-weight:700;padding:4px 9px;border-radius:7px;text-align:center;white-space:nowrap;}
+.si-badge.warn{background:#fef3c7;color:#b45309;border:0.5px solid #fcd34d;}
+.si-badge.danger{background:#fee2e2;color:#dc2626;border:0.5px solid #fca5a5;}
+.si-badge.critical{background:#7f1d1d;color:#fff;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="nav" id="nav">
+    <button class="active" onclick="switchTab('assessment',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      観察 / 入力
+    </button>
+    <button onclick="switchTab('reasoning',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      推論 / 判定
+    </button>
+    <button onclick="switchTab('reference',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      資料 / 解説
+    </button>
+  </div>
+  <div class="main" id="main-content"></div>
+  <div class="footer" id="footer" style="background:#1e293b;">
+    <div class="footer-item">
+      <div class="footer-sublabel">Positioning</div>
+      <div class="footer-value" id="footer-pos">通常体位</div>
+    </div>
+    <div class="footer-item">
+      <div class="footer-sublabel">Shock Index</div>
+      <div class="footer-value" id="footer-si">--</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var state={
+  weeks:28,days:0,lmp:'',edc:'',hr:'',sbp:'',dbp:'',
+  tab:'assessment',openDisease:null,
+  symptoms:{
+    boardLikeRigidity:false,continuousPain:false,periodicPain:false,epigastricPain:false,
+    regularContractions:false,suddenUnilateralPain:false,rightLowerPain:false,flankPain:false,
+    painlessBleeding:false,bleedingWithPain:false,rupture:false,prolapseSensation:false,
+    fetusBleedingSuspect:false,cordVisible:false,
+    seizure:false,visualDisturbance:false,headache:false,coldSweat:false,dyspnea:false,fetalMovementReduced:false,
+    priorCS:false,fever:false,legSwelling:false,
+    nauseaVomiting:false,jaundice:false,dehydration:false,abdomenDistension:false
+  }
+};
+
+var diseases=[
+  {id:'abortion',name:'流産・切迫流産',range:[2,22],pathology:'妊娠22週未満に妊娠が中断される状態。母体の大出血が救急上の課題となる。',findings:'下腹部痛、性器出血（鮮血・凝血塊）。週数が進むほど出血リスク増大。',action:'出血量・バイタル確認。SI上昇時は迅速な搬送が必要。'},
+  {id:'cervical_shock',name:'子宮頸部ショック',range:[2,22],pathology:'流産時などに内容物が子宮頸管に嵌入し、迷走神経刺激によりショックを来す。',findings:'下腹部痛、出血。迷走神経反射による「徐脈」と「血圧低下」が特徴。',action:'内容物除去が必要。体位調整と速やかな搬送。'},
+  {id:'hyperemesis',name:'つわり・妊娠悪阻',range:[4,14],pathology:'hCG上昇等による消化器症状。重症化すると脱水やケトーシスを来す。',findings:'頻回な嘔吐、体重減少、皮膚の乾燥（脱水）。',action:'脱水の評価。輸液開始前または同時にビタミンB1（チアミン）を別途投与（最低7日間100mg/日、その後維持量50mg/日）。Wernicke脳症予防のため必須。'},
+  {id:'ectopic',name:'異所性妊娠',range:[0,11],pathology:'子宮体部以外への着床。卵管破裂時は腹腔内大量出血でショックとなる。',findings:'下腹部痛、不正出血。破裂時はSI上昇、冷汗。',action:'緊急手術が可能な医療機関への最優先搬送。'},
+  {id:'incompetence',name:'子宮頸管無力症',range:[12,37],pathology:'無痛性に頸管が開大し、胎胞が脱出する早産の主要原因。',findings:'自覚症状は少ないが、脱出感や帯下の増加。',action:'絶対安静。腹圧をかけない水平保持での搬送。'},
+  {id:'hellp_syndrome',name:'HELLP症候群',range:[20,42],pathology:'溶血、肝酵素上昇、血小板減少。診断遅延は肝破裂を招く極めて危険な状態。ほとんどの症例が27〜37週に発生するが、20%が分娩後48時間以内、分娩後1週間以内にも発症する可能性がある。',findings:'心窩部痛（胃痛と誤認しやすい）、右季肋部痛、悪心、黄疸。高血圧がなくても発症する（HDP非合併型に注意）。',action:'迅速な妊娠終結（ターミネーション）が必要。AFLP（急性妊娠脂肪肝）との鑑別困難。総合周産期センターへ最優先搬送。'},
+  {id:'placenta_previa',name:'前置胎盤',range:[24,39],pathology:'胎盤が子宮口を覆う。突然の大出血（警告出血）リスクがある。',findings:'無痛性の突発的な鮮血。',action:'【内診厳禁】大出血を誘発する。安静を保ち帝王切開可能施設へ。'},
+  {id:'eclampsia',name:'子癇',range:[20,42],pathology:'妊娠20週以降の痙攣。脳出血を合併しやすく、母体死亡リスクが高い。子癇の20%は分娩後48時間以内に発生する。',findings:'強直性・間代性痙攣。前駆症状に頭痛、視覚障害。',action:'気道確保→側臥位→酸素投与→バイタル監視。刺激回避（遮光・静音）し緊急搬送。硫酸マグネシウムは痙攣再発予防のために投与。'},
+  {id:'hdp_logic',name:'妊娠高血圧症候群 (HDP)',range:[20,42],pathology:'高血圧を主症状とする。脳出血、腎不全、胎盤剥離の原因となる。',findings:'sBP 140以上、重い頭痛、目がチカチカする。',action:'安静、刺激回避。高次施設への搬送。'},
+  {id:'pa_logic',name:'常位胎盤早期剥離',range:[22,42],pathology:'分娩前に胎盤が剥がれ、母体DICと胎児死亡を招く緊急事態。',findings:'持続的腹痛、板状硬、SI上昇、胎動消失。古典的三徴（出血・疼痛・子宮硬直）は10%のみに出現。最も多い組み合わせは「出血+胎児心拍異常」（39%）。出血が見えない場合（concealed hemorrhage）が18%存在する。',action:'最優先搬送。総合周産期センターが第一選択。'},
+  {id:'afe_logic',name:'羊水塞栓症',range:[22,42],pathology:'羊水成分による激しいショック・肺塞栓・DIC。正期産に多いが、妊娠37週未満でも発症しうる。発生率は10万出生あたり1.9〜6.1例。分娩中〜産後30分以内に突然発症。',findings:'突然の呼吸困難、心肺停止、さらさらした止まらない出血。',action:'心肺蘇生、右室不全管理、DIC対策。大量輸血体制のある施設へ。'},
+  {id:'aflp',name:'急性妊娠脂肪肝 (AFLP)',range:[28,40],pathology:'GL2023（CQ312）：妊娠後期の肝脂肪変性。HELLP症候群と鑑別困難で同一CQに収載。低血糖・凝固障害・腎不全を合併し、母児死亡リスクが高い重篤疾患。',findings:'全身倦怠感・悪心嘔吐・黄疸・右季肋部痛。低血糖（発汗・意識障害・振戦）を合併することがある。HELLP症候群と症状が重複。',action:'低血糖補正（ブドウ糖投与）しながら緊急搬送。総合周産期センターで緊急妊娠終結が必要。早期認識・早期分娩が予後を左右する。'},
+  {id:'pph',name:'産後出血 (PPH)',range:[37,42],pathology:'GL2023（CQ418）：分娩後500mL以上の出血。子宮弛緩が最多原因（約80%）。血圧低下は遅れて現れるためSI監視が重要。SI≥1.0で急性循環不全対応が必要。',findings:'GL2023基準：100bpm以上の頻脈 または SI≥1.0 または 興奮・不穏・不安などの意識状態 → 急性循環不全と判断。分娩後の大量性器出血、子宮軟性（弛緩）。',action:'GL2023：①酸素投与②血液検査（フィブリノゲン含む）輸血準備③トラネキサム酸投与を考慮。子宮底輪状マッサージ。自施設困難なら大量輸血対応施設へ緊急搬送。'},
+  {id:'preterm',name:'切迫早産',range:[22,37],pathology:'妊娠22週〜37週未満に規則的な子宮収縮が出現し、頸管短縮・開大が進行する状態。子宮頸管無力症（無痛性）とは異なり、収縮性の腹痛を伴う。22〜28週は超低出生体重管理が必要でNICU完備施設が必須。',findings:'5〜10分間隔の規則的な下腹部緊満感・子宮収縮（収縮時に腹部が硬くなる）。腰背部痛、少量の性器出血や帯下増加を伴うことがある。破水感を伴う場合はより緊急。',action:'子宮収縮抑制薬投与可能な施設へ搬送。左側臥位・安静。22〜28週の超早産期はNICU・MFICUを備えた総合周産期センターが必須。'},
+  {id:'ovarian_torsion',name:'卵巣嚢腫茎捻転',range:[0,22],pathology:'妊娠初期に増大した卵巣嚢腫（黄体嚢胞など）が軸を中心に捻転し、血流障害を来す。虚血が進行すると卵巣壊死となるため時間的緊急性が高い。妊娠初期の黄体嚢腫拡大により特に多く、異所性妊娠との鑑別が重要。',findings:'突然の片側性激痛（右>左）・悪心嘔吐・腹膜刺激症状。痛みは持続性で体位変換で悪化する。出血を伴わないことが多く、異所性妊娠（出血あり）との鑑別ポイント。発熱は壊死進行後に出現。',action:'緊急手術が必要。異所性妊娠との鑑別が重要（性器出血の有無を確認）。速やかな外科・産婦人科対応施設への搬送。痛みが突然消失した場合も自然整復後の再捻転リスクあり。'},
+  {id:'uterine_rupture',name:'子宮破裂',range:[20,42],pathology:'既往帝切や筋腫核出術などの子宮瘢痕が裂開し、腹腔内大量出血によりショックとなる。',findings:'分娩中の突然の激痛→子宮収縮消失、胎動消失。SI急上昇。腹部の形状変化（子宮外に胎児を触知）。',action:'緊急帝王切開。ショック対応しながら総合周産期センターへ最優先搬送。'},
+  {id:'appendicitis_preg',name:'急性虫垂炎（妊娠中）',range:[0,42],pathology:'妊娠中は増大する子宮により虫垂が頭側・外側へ偏位するため、痛みの部位が右下腹部から右側腹部・右季肋部へ移行する。妊娠中は炎症所見が遅れることがあり、穿孔・腹膜炎のリスクが高い。穿孔時の早産・胎児死亡リスクも伴う。',findings:'右下腹部〜右側腹部痛（妊娠週数により部位が頭側に変化）、発熱（38℃以上）、悪心嘔吐。反跳痛・筋性防御は妊娠末期には不明確。食欲不振を伴うことが多い。HELLP症候群との鑑別も必要。',action:'穿孔・腹膜炎では早産・胎児死亡リスクが急増するため、迷わず緊急搬送。外科・産婦人科両科が対応可能な施設へ。'},
+  {id:'urolithiasis',name:'尿管結石（妊娠中）',range:[0,42],pathology:'妊娠中はプロゲステロン・増大する子宮による尿路拡張・尿うっ滞によりシュウ酸カルシウム結石リスクが増加。内視鏡治療に制限があり管理が難しい。感染合併（腎盂腎炎）時は敗血症リスクがある。',findings:'突然の側腹部〜鼠径部への疝痛（波状に増悪）、血尿（肉眼的or顕微鏡的）、悪心嘔吐。居ても立ってもいられない体動不穏が特徴。腹膜刺激症状は通常なし。発熱があれば感染合併を疑う。',action:'疼痛管理・水分補給。発熱を伴う場合は腎盂腎炎・敗血症のリスクで緊急搬送（抗菌薬投与が必要）。NSAIDsは妊娠中要注意のためアセトアミノフェンが推奨。'},
+  {id:'vasa_previa',name:'血管前置（Vasa Previa）',range:[20,42],pathology:'胎盤から離れた胎児血管（臍帯血管）が子宮口付近を走行する状態。破水時に血管が断裂して胎児出血を来す。診断未確定例の胎児死亡率は75〜100%。',findings:'破膜直後の突然の鮮血出血→胎児心拍の急激な低下（遷延性徐脈）。母体バイタルは比較的安定しているが、胎児は急速に失血している。',action:'母体が安定していても胎児は緊急状態。即時の緊急帝王切開が唯一の治療。周産期センターへ最優先搬送。'},
+  {id:'cervical_polyp',name:'子宮頸管ポリープ・びらん',range:[0,42],pathology:'妊娠中はエストロゲン増加により頸管粘膜が充血・易出血性となる。ポリープ・びらんは良性病変だが妊娠中の不正出血を引き起こす。緊急性は低いが前置胎盤・早期剥離などの重篤疾患の除外が必須。',findings:'少量の鮮血（点状〜少量）、腹痛なし。性交後・排便後・診察後など外来性刺激の後に多い。出血量・腹痛の有無が鑑別のポイント。大量出血・腹痛があれば他疾患を強く疑う。',action:'少量出血で全身状態良好なら緊急性は低い。ただし前置胎盤・常位胎盤早期剥離は必ず除外する。安静・産科への早期受診を促す。'},
+  {id:'chorioamnionitis',name:'絨毛膜羊膜炎（CAM）',range:[22,42],pathology:'絨毛膜・羊膜・羊水の細菌感染。破水後に特にリスクが高く、上行性感染が多い。母体敗血症・早産誘発・新生児感染（B群連鎖球菌等）の原因となる。重症化すると敗血症性ショックとなる。',findings:'発熱（38℃以上）・頻脈・子宮圧痛・悪臭帯下の4徴が典型的。破水を伴うことが多い。羊水の混濁・異臭が見られることがある。重症化すると母体ショック・意識障害。',action:'抗菌薬投与と速やかな分娩（妊娠終結）が原則。敗血症に準じた対応（輸液・酸素）。発熱＋頻脈＋破水の組み合わせは速やかに高次施設へ搬送。'},
+  {id:'cord_prolapse',name:'臍帯脱出',range:[22,42],pathology:'胎児先進部より先に臍帯が下降・脱出した状態。臍帯が胎児先進部と産道の間に挟まれ臍帯循環が途絶する。胎児仮死→死亡の時間的緊急性が最も高い産科緊急疾患の一つ。破水後、多胎・羊水過多・横位などで特にリスクが高い。',findings:'破水後に膣口に臍帯を触知・視認。胎児心拍の急激な悪化（遅発性・遷延性徐脈）。臍帯の拍動が触知できれば胎児は生存中。',action:'【臍帯を押し込まない・絶対に圧迫しない】膝胸位（膝をついてお尻を高く上げる）で臍帯圧迫を軽減。用手的に胎児先進部を持ち上げ臍帯を圧迫から解放。即時緊急帝王切開のために搬送。酸素投与。'},
+  {id:'pancreatitis_preg',name:'急性膵炎（妊娠中）',range:[0,42],pathology:'妊娠中は胆石・高トリグリセリド血症が主な誘因。膵酵素の活性化による自己消化で、重症化すると全身炎症反応・臓器不全を来す。HELLP症候群・AFLPと症状が重複するため鑑別が重要。妊娠後半に多い。',findings:'心窩部〜臍周囲〜背部への放散痛。前屈位（胡坐）で軽減することがある。悪心嘔吐・発熱・腹部防御。HELLP症候群（右季肋部痛・黄疸）と区別が難しい場合がある。',action:'絶飲食・輸液・鎮痛。重症急性膵炎は集中治療が必要。HELLP症候群を除外しながら高次施設（内科・外科・産科対応可能施設）へ搬送。'},
+  {id:'dvt_pe',name:'深部静脈血栓症・肺塞栓',range:[0,42],pathology:'妊娠は凝固能亢進・静脈還流低下・線溶低下により血栓リスクが非妊娠時の5倍。DVTが肺塞栓に発展すると突然の呼吸困難・心停止となる。産後（特に帝切後）がピーク。長期臥床・多胎・肥満がリスク因子。',findings:'DVT：片側の下腿腫脹・発赤・把握痛（Homans徴候は感度が低い）。肺塞栓：突然の胸痛・呼吸困難・頻脈・SpO2低下。大量肺塞栓では失神・心停止。両下肢の左右差に注目。',action:'抗凝固療法（ヘパリン）が必要（妊娠中は経口抗凝固薬禁忌）。酸素投与・安静。大量肺塞栓では心停止となるためCPR対応。ICU対応施設へ緊急搬送。'},
+  {id:'ileus_preg',name:'腸閉塞（イレウス）',range:[0,42],pathology:'増大する子宮による腸管偏位と、既往腹部手術（帝切など）による癒着が屈曲・閉塞を来す。機械的イレウスが多い。妊娠後期に多いが産後も起こりうる。腸管壊死・穿孔の緊急手術が必要となる場合がある。',findings:'腹部膨満感・悪心嘔吐（胆汁性〜便汁性）・排ガス消失・腸蠕動音の亢進（機械性）または消失（麻痺性）。間欠的な強い腹部痙攣痛。帝切・腹部手術の既往歴が重要な鑑別ポイント。',action:'絶飲食・胃管による腸管減圧が必要。外科緊急手術の可能性あり。腹部手術既往の有無を確認し、外科と産科の両科が対応可能な施設へ搬送。'}
+];
+
+function getSI(){
+  var h=parseFloat(state.hr),s=parseFloat(state.sbp);
+  return(h&&s)?(h/s):null;
+}
+
+function getSIGrade(si){
+  if(!si)return null;
+  if(si>=2.0)return{level:3,label:'最重篤 SI≥2.0',color:'#7f1d1d',badge:'CRITICAL',est:'危機的出血の宣言基準（SI≥1.5）を超過。出血量の公式記載なし'};
+  if(si>=1.5)return{level:2,label:'危険 SI≥1.5',color:'#dc2626',badge:'DANGER',est:'推定出血約2.5L（目安）・危機的出血の宣言基準'};
+  if(si>=1.0)return{level:1,label:'要注意 SI≥1.0',color:'#d97706',badge:'WARNING',est:'推定出血約1.5L（目安）'};
+  return{level:0,label:'正常範囲',color:'#16a34a',badge:'NORMAL',est:''};
+}
+
+function updateSI(){
+  var si=getSI();
+  var siGrade=getSIGrade(si);
+  var siVal=si?si.toFixed(2):'--';
+  var siColor=siGrade?siGrade.color:'var(--text)';
+  var numEl=document.getElementById('si-num-el');
+  var estEl=document.getElementById('si-est-el');
+  var boxEl=document.getElementById('si-box-el');
+  var badgeEl=document.getElementById('si-badge-el');
+  if(numEl){numEl.textContent=siVal;numEl.style.color=siColor;}
+  if(estEl){
+    if(siGrade&&siGrade.est){estEl.textContent=siGrade.est;estEl.style.color=siColor;estEl.style.display='';}
+    else{estEl.style.display='none';}
+  }
+  if(boxEl){boxEl.className='si-box'+(si&&si>=1.0?' danger':'');}
+  if(badgeEl){
+    if(siGrade&&siGrade.level>0){
+      var bc=siGrade.level>=3?'critical':siGrade.level>=2?'danger':'warn';
+      badgeEl.className='si-badge '+bc;
+      badgeEl.innerHTML=siGrade.badge+'<br><span style="font-size:8px;font-weight:600;">'+siGrade.label+'</span>';
+      badgeEl.style.display='';
+    }else{badgeEl.style.display='none';}
+  }
+  var footerSi=document.getElementById('footer-si');
+  if(footerSi){footerSi.textContent=si?si.toFixed(2):'--';footerSi.style.color=(si&&si>1.0)?'#fca5a5':'#fff';}
+}
+
+function updateWeeksDisplay(){
+  var w=state.weeks,d=state.days;
+  var wEl=document.getElementById('weeks-num-el');
+  var dEl=document.getElementById('days-num-el');
+  var badgeEl=document.getElementById('period-badge-el');
+  var labelEl=document.getElementById('weeks-label-el');
+  if(wEl)wEl.textContent=w;
+  if(dEl)dEl.textContent=d;
+  var periodBg=w<22?'#fef2f2':w<37?'#eff6ff':'#f0fdf4';
+  var periodColor=w<22?'#991b1b':w<37?'#1e40af':'#166534';
+  var periodText=w<22?'流産期':w<37?'早産期':'正期産';
+  if(badgeEl){badgeEl.style.background=periodBg;badgeEl.style.color=periodColor;badgeEl.textContent=periodText;}
+  if(labelEl)labelEl.textContent=w+'w '+d+'d';
+  // スライダー→LMP・EDC を逆算してフィールドに反映
+  calcDatesFromWeeks();
+  var lmpEl=document.getElementById('lmp-input');
+  var edcEl=document.getElementById('edc-input');
+  if(lmpEl)lmpEl.value=state.lmp;
+  if(edcEl)edcEl.value=state.edc;
+  var footerPos=document.getElementById('footer-pos');
+  var footer=document.getElementById('footer');
+  if(footerPos){
+    var strict=w>=20;
+    footerPos.textContent=w>=20?'左側臥位 厳守':w>=12?'左側臥位 推奨':'通常体位';
+    if(footer){footer.style.background=strict?'#b91c1c':'#1e293b';}
+    footerPos.style.animation=strict?'pulse 1.5s infinite':'none';
+  }
+}
+
+function getLogic(){
+  var w=state.weeks,s=state.symptoms,si=getSI(),sbp=parseFloat(state.sbp),hr=parseFloat(state.hr),dbp=parseFloat(state.dbp);
+  var redFlags=[];
+  var facility={level:'一般産科 / 救急',reason:'通常リスク',bg:'#f1f5f9',color:'#334155',border:'#94a3b8'};
+  var pos={label:'通常体位',strict:false};
+  if(w>=20)pos={label:'左側臥位 厳守',strict:true};
+  else if(w>=12)pos={label:'左側臥位 推奨',strict:false};
+  if(w<22)facility={level:'一般病院（母体救急）',reason:'流産期。母体救命を優先。',bg:'#f1f5f9',color:'#334155',border:'#94a3b8'};
+  else if(w<28)facility={level:'総合周産期センター',reason:'超早産期。高次施設が必須。',bg:'#fef2f2',color:'#991b1b',border:'#ef4444'};
+  else if(w<34)facility={level:'地域・総合周産期',reason:'早産期。NICU管理。',bg:'#eff6ff',color:'#1e40af',border:'#3b82f6'};
+  else facility={level:'一般産科・地域周産期',reason:'正期産。成熟児対応。',bg:'#f0fdf4',color:'#166534',border:'#22c55e'};
+  if(s.boardLikeRigidity||(s.continuousPain&&si&&si>=1.0))redFlags.push({name:'常位胎盤早期剥離（GL2023 CQ308）',id:'pa_logic'});
+  if(w>=20&&(s.epigastricPain||(s.jaundice&&s.nauseaVomiting)))redFlags.push({name:'HELLP症候群 疑い（GL2023 CQ312）',id:'hellp_syndrome'});
+  if(s.jaundice&&(s.nauseaVomiting||s.epigastricPain)&&w>=28)redFlags.push({name:'急性妊娠脂肪肝(AFLP) 疑い（GL2023 CQ312）',id:'aflp'});
+  if(s.painlessBleeding&&w>=24)redFlags.push({name:'前置胎盤 警告出血（内診厳禁）',id:'placenta_previa'});
+  if(s.seizure)redFlags.push({name:'子癇（GL2023 CQ309-3）',id:'eclampsia'});
+  var bpEntered=!isNaN(sbp)||!isNaN(dbp);
+  var htn=w>=20&&(sbp>=140||dbp>=90);
+  var hdpSevere=(sbp>=160||dbp>=110)||(htn&&(s.visualDisturbance||s.headache));
+  var hdpMild=!hdpSevere&&htn;
+  if(hdpSevere)redFlags.push({name:'重症HDP疑い（sBP≥160またはdBP≥110、または高血圧＋頭痛・視覚障害）',id:'hdp_logic'});
+  else if(hdpMild)redFlags.push({name:'HDP疑い sBP≥140またはdBP≥90（GL2023 CQ309-1）',id:'hdp_logic'});
+  else if(w>=20&&!bpEntered&&(s.visualDisturbance||s.headache))redFlags.push({name:'子癇前症状の可能性（頭痛・視覚障害）：血圧を測定してください',id:'hdp_logic',low:true});
+  if(s.prolapseSensation&&w<37)redFlags.push({name:'子宮頸管無力症（腹圧禁忌）',id:'incompetence'});
+  if(s.bleedingWithPain&&w<22)redFlags.push({name:'流産・切迫流産',id:'abortion'});
+  if(hr<60&&s.bleedingWithPain&&w<22)redFlags.push({name:'子宮頸部ショック（迷走神経反射）',id:'cervical_shock'});
+  if(s.dyspnea&&w>=34)redFlags.push({name:'羊水塞栓症 疑い（突然の呼吸困難。ショック・心停止なら即時CPR）',id:'afe_logic'});
+  if(s.fetalMovementReduced)redFlags.push({name:'胎児機能不全 疑い（胎動消失は最重要サイン）',id:'pa_logic'});
+  // 追加疾患ロジック
+  if(s.regularContractions&&w>=22&&w<37)redFlags.push({name:'切迫早産（規則的収縮）',id:'preterm'});
+  if(s.suddenUnilateralPain&&!s.bleedingWithPain)redFlags.push({name:'卵巣嚢腫茎捻転 疑い',id:'ovarian_torsion'});
+  if(s.priorCS&&(s.continuousPain||s.coldSweat)&&w>=28)redFlags.push({name:'子宮破裂 疑い（帝切既往・要緊急）',id:'uterine_rupture'});
+  if(s.fever&&s.rightLowerPain)redFlags.push({name:'急性虫垂炎 疑い（妊娠中・部位変化に注意）',id:'appendicitis_preg'});
+  if(s.flankPain)redFlags.push({name:'尿管結石 疑い（発熱あれば敗血症リスク）',id:'urolithiasis',low:!s.fever});
+  if(s.fetusBleedingSuspect&&w>=34)redFlags.push({name:'前置血管 疑い（胎児緊急・即時帝切）',id:'vasa_previa'});
+  if(s.fever&&(s.rupture||s.continuousPain)&&w>=22)redFlags.push({name:'絨毛膜羊膜炎 疑い（敗血症リスク）',id:'chorioamnionitis'});
+  if(s.cordVisible)redFlags.push({name:'臍帯脱出（産科最緊急・押し込み禁止）',id:'cord_prolapse'});
+  if(s.epigastricPain&&s.nauseaVomiting&&!s.jaundice&&w>=16)redFlags.push({name:'急性膵炎 疑い（妊娠中・HELLP鑑別）',id:'pancreatitis_preg'});
+  if(s.legSwelling&&s.dyspnea)redFlags.push({name:'DVT・肺塞栓 疑い（抗凝固療法が必要）',id:'dvt_pe'});
+  if(s.abdomenDistension&&s.nauseaVomiting&&s.priorCS)redFlags.push({name:'腸閉塞（イレウス）疑い（帝切既往）',id:'ileus_preg'});
+  if(redFlags.some(function(f){return !f.low;}))facility={level:'高次医療機関（緊急搬送）',reason:'緊急疾患の徴候あり：周産期センターを選定してください。',bg:'#dc2626',color:'#ffffff',border:'#991b1b'};
+  return{facility,redFlags,pos};
+}
+
+function getPeriodLabel(){
+  var w=state.weeks;
+  if(w<22)return'流産期';
+  if(w<37)return'早産期';
+  return'正期産';
+}
+
+function switchTab(tab,btn){
+  state.tab=tab;
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  render();
+}
+
+function toggleSymptom(id){
+  state.symptoms[id]=!state.symptoms[id];
+  render();
+}
+
+function openDisease(id){
+  state.openDisease=state.openDisease===id?null:id;
+  render();
+  setTimeout(function(){
+    var el=document.getElementById('disease-'+id);
+    if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+  },100);
+}
+
+function formatDate(d){
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
+function calcDatesFromWeeks(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var totalDays=state.weeks*7+state.days;
+  var lmpDate=new Date(today.getTime()-totalDays*86400000);
+  var edcDate=new Date(lmpDate.getTime()+280*86400000);
+  state.lmp=formatDate(lmpDate);
+  state.edc=formatDate(edcDate);
+}
+
+function parseLocalDate(v){
+  var p=String(v).split('-');
+  return new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));
+}
+
+function updateFromLMP(v){
+  state.lmp=v;
+  if(v){
+    var today=new Date();today.setHours(0,0,0,0);
+    var lmp=parseLocalDate(v);
+    var diff=Math.round((today-lmp)/86400000);
+    if(diff>=0&&diff<=300){
+      state.weeks=Math.floor(diff/7);state.days=diff%7;
+      state.edc=formatDate(new Date(lmp.getFullYear(),lmp.getMonth(),lmp.getDate()+280));
+    }else{state.edc='';}
+  }else{state.edc='';}
+  render();
+}
+
+function updateFromEDC(v){
+  state.edc=v;
+  if(v){
+    var today=new Date();today.setHours(0,0,0,0);
+    var edc=parseLocalDate(v);
+    var lmpDate=new Date(edc.getFullYear(),edc.getMonth(),edc.getDate()-280);
+    state.lmp=formatDate(lmpDate);
+    var diff=Math.round((today-lmpDate)/86400000);
+    if(diff>=0&&diff<=300){state.weeks=Math.floor(diff/7);state.days=diff%7;}
+  }else{state.lmp='';}
+  render();
+}
+
+function renderAssessment(){
+  var periodBg=state.weeks<22?'#fef2f2':state.weeks<37?'#eff6ff':'#f0fdf4';
+  var periodColor=state.weeks<22?'#991b1b':state.weeks<37?'#1e40af':'#166534';
+  var si=getSI();
+  var siVal=si?si.toFixed(2):'--';
+  var siDanger=si&&si>=1.0;
+  var siGrade=getSIGrade(si);
+
+  var symGroups=[
+    {color:'#dc2626',label:'Pain (痛み・張り)',icon:'⚡',colorClass:'red',items:[
+      {id:'boardLikeRigidity',label:'板状硬（カチカチに硬い）',sub:'常位胎盤早期剥離'},
+      {id:'continuousPain',label:'持続的な激しい腹痛',sub:'早期剥離・子宮破裂・AFLP'},
+      {id:'periodicPain',label:'周期的な下腹部痛',sub:'切迫早産・陣痛'},
+      {id:'regularContractions',label:'規則的な子宮収縮（5〜10分間隔）',sub:'切迫早産（22〜37週）'},
+      {id:'suddenUnilateralPain',label:'突然の片側性激痛・腹膜刺激症状',sub:'卵巣嚢腫茎捻転・異所性妊娠'},
+      {id:'rightLowerPain',label:'右下腹部〜右側腹部痛＋発熱',sub:'急性虫垂炎（妊娠中は部位が頭側に偏位）'},
+      {id:'flankPain',label:'側腹部〜腰背部の疝痛（波状）',sub:'尿管結石（感染合併で敗血症リスク）'},
+      {id:'epigastricPain',label:'心窩部痛（みぞおちの痛み）',sub:'HELLP症候群・膵炎・子癇前駆'}
+    ]},
+    {color:'#2563eb',label:'Fluid (出血・膣内)',icon:'💧',colorClass:'blue',items:[
+      {id:'painlessBleeding',label:'無痛性の突発的な出血（鮮血）',sub:'前置胎盤（警告出血）'},
+      {id:'bleedingWithPain',label:'痛みのある性器出血',sub:'流産・常位胎盤早期剥離'},
+      {id:'rupture',label:'破水感（生温かい水が出る）',sub:'切迫早産・絨毛膜羊膜炎・AFE'},
+      {id:'prolapseSensation',label:'膣内の脱出感・帯下増',sub:'子宮頸管無力症・胎胞脱出'},
+      {id:'fetusBleedingSuspect',label:'破水直後の鮮血＋胎児心拍急低下',sub:'前置血管（胎児緊急・母体は安定）'},
+      {id:'cordVisible',label:'膣口に臍帯触知・脱出（臍帯）',sub:'臍帯脱出【押し込み絶対禁止】'}
+    ]},
+    {color:'#7c3aed',label:'Systemic (全身・神経・胎児)',icon:'🧠',colorClass:'purple',items:[
+      {id:'seizure',label:'痙攣（子癇）',sub:'HDP重症合併症'},
+      {id:'visualDisturbance',label:'目がチカチカする（視覚障害）',sub:'子癇前駆・脳出血リスク'},
+      {id:'headache',label:'重い頭痛',sub:'HDP重症化サイン'},
+      {id:'coldSweat',label:'冷汗・顔面蒼白',sub:'ショック状態'},
+      {id:'dyspnea',label:'突然の呼吸困難・心肺停止',sub:'羊水塞栓症・肺塞栓の疑い'},
+      {id:'fetalMovementReduced',label:'胎動の減少・消失',sub:'胎児機能不全の最重要サイン'},
+      {id:'priorCS',label:'帝王切開・腹部手術の既往あり',sub:'子宮破裂・イレウスのリスク因子'},
+      {id:'fever',label:'発熱（38℃以上）',sub:'絨毛膜羊膜炎・虫垂炎・尿路感染'},
+      {id:'legSwelling',label:'片側下腿の腫脹・把握痛',sub:'深部静脈血栓症（DVT）・肺塞栓リスク'}
+    ]},
+    {color:'#ea580c',label:'Digestion (消化器)',icon:'🌡',colorClass:'orange',items:[
+      {id:'nauseaVomiting',label:'激しい悪心・嘔吐',sub:'妊娠悪阻・HELLP症候群・膵炎'},
+      {id:'jaundice',label:'黄疸（白目が黄色い）',sub:'HELLP・AFLP（重症肝障害）'},
+      {id:'dehydration',label:'口渇・皮膚の乾燥',sub:'脱水徴候'},
+      {id:'abdomenDistension',label:'腹部膨満・排ガス消失',sub:'腸閉塞（イレウス）・帝切既往で注意'}
+    ]}
+  ];
+
+  var h='';
+  h+='<div class="card">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:0.5px solid var(--border);padding-bottom:14px;margin-bottom:14px;">';
+  h+='<div><div class="label" style="margin-bottom:5px;">Pregnancy Period</div>';
+  h+='<div style="display:flex;align-items:baseline;gap:4px;">';
+  h+='<span id="weeks-num-el" class="weeks-num">'+state.weeks+'</span><span class="weeks-unit">w</span>';
+  h+='<span id="days-num-el" class="weeks-num" style="margin-left:6px;">'+state.days+'</span><span class="weeks-unit">d</span></div></div>';
+  h+='<div id="period-badge-el" class="period-badge" style="background:'+periodBg+';color:'+periodColor+';">'+getPeriodLabel()+'</div>';
+  h+='</div>';
+  h+='<div class="grid2" style="margin-bottom:14px;">';
+  h+='<div><div class="label" style="margin-bottom:4px;">LMP（最終月経）</div><input id="lmp-input" type="date" value="'+state.lmp+'" onchange="updateFromLMP(this.value)"/></div>';
+  h+='<div><div class="label" style="margin-bottom:4px;">EDC（出産予定日）</div><input id="edc-input" type="date" value="'+state.edc+'" onchange="updateFromEDC(this.value)"/></div>';
+  h+='</div>';
+  h+='<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span class="label">Manual Adjust</span><span id="weeks-label-el" class="label" style="color:var(--text);">'+state.weeks+'w '+state.days+'d</span></div>';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span class="label" style="width:12px;">W</span><input id="rangeW" type="range" min="0" max="42" value="'+state.weeks+'" oninput="state.weeks=parseInt(this.value);updateWeeksDisplay();" onchange="render();" style="flex:1;"/></div>';
+  h+='<div style="display:flex;align-items:center;gap:10px;"><span class="label" style="width:12px;">D</span><input id="rangeD" type="range" min="0" max="6" value="'+state.days+'" oninput="state.days=parseInt(this.value);updateWeeksDisplay();" onchange="render();" style="flex:1;"/></div>';
+  h+='</div>';
+
+  h+='<div class="card">';
+  h+='<div class="label" style="margin-bottom:12px;">Vital Signs</div>';
+  h+='<div class="grid2" style="margin-bottom:8px;">';
+  h+='<div><div class="label" style="margin-bottom:4px;">Heart Rate (bpm)</div><input type="number" inputmode="numeric" value="'+state.hr+'" placeholder="---" oninput="state.hr=this.value;updateSI();"/></div>';
+  h+='<div><div class="label" style="margin-bottom:4px;">sBP (mmHg)</div><input type="number" inputmode="numeric" value="'+state.sbp+'" placeholder="---" oninput="state.sbp=this.value;updateSI();"/></div>';
+  h+='</div>';
+  h+='<div style="margin-bottom:12px;">';
+  h+='<div class="label" style="margin-bottom:4px;">dBP (mmHg) <span style="font-size:9px;color:#2563eb;font-weight:600;letter-spacing:0;">GL2023: ≥90→HDP診断 / ≥110→高血圧緊急症</span></div>';
+  h+='<input type="number" inputmode="numeric" value="'+state.dbp+'" placeholder="---" oninput="state.dbp=this.value;updateSI();" style="font-size:22px;padding:10px 14px;text-align:center;"/>';
+  h+='</div>';
+  var siColor=siGrade?siGrade.color:'var(--text)';
+  var siBoxClass='si-box'+(siDanger?' danger':'');
+  var siBadgeClass='si-badge'+(siGrade&&siGrade.level>0?' '+(siGrade.level>=3?'critical':siGrade.level>=2?'danger':'warn'):'');
+  var siBadgeStyle=siGrade&&siGrade.level>0?'':'display:none;';
+  var siBadgeHtml=siGrade&&siGrade.level>0?siGrade.badge+'<br><span style="font-size:8px;font-weight:600;">'+siGrade.label+'</span>':'';
+  var siEstStyle=siGrade&&siGrade.est?'':'display:none;';
+  var siEstHtml=siGrade&&siGrade.est?siGrade.est:'';
+  h+='<div id="si-box-el" class="'+siBoxClass+'"><div>';
+  h+='<div class="label" style="margin-bottom:2px;">Shock Index <span style="font-weight:400;font-size:8px;">GL2023 CQ418-2: SI=1→約1.5L / SI=1.5→約2.5L（推測値）</span></div>';
+  h+='<div id="si-num-el" class="si-num" style="color:'+siColor+'">'+siVal+'</div>';
+  h+='<div id="si-est-el" style="font-size:10px;font-weight:600;margin-top:2px;color:'+siColor+';'+siEstStyle+'">'+siEstHtml+'</div>';
+  h+='</div>';
+  h+='<div id="si-badge-el" class="'+siBadgeClass+'" style="'+siBadgeStyle+'">'+siBadgeHtml+'</div>';
+  h+='</div></div>';
+
+  h+='<div class="card">';
+  h+='<div class="label" style="margin-bottom:14px;">Clinical Signs Checklist</div>';
+  symGroups.forEach(function(g){
+    h+='<div class="sym-group" style="margin-bottom:18px;">';
+    h+='<div class="sym-group-title" style="color:'+g.color+';margin-bottom:6px;">'+g.label+'</div>';
+    g.items.forEach(function(item){
+      var on=state.symptoms[item.id];
+      h+='<button class="sym-btn'+(on?' on-'+g.colorClass:'')+'" onclick="toggleSymptom(\''+item.id+'\')">';
+      h+='<div><span class="sym-label">'+item.label+'</span><span class="sym-sub">'+item.sub+'</span></div>';
+      if(on)h+='<div class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>';
+      h+='</button>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+function renderReasoning(){
+  var logic=getLogic();
+  var f=logic.facility;
+  var h='';
+  h+='<div class="facility-card" style="background:'+f.bg+';color:'+f.color+';border-color:'+f.border+';">';
+  h+='<div style="display:flex;align-items:center;gap:12px;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+  h+='<div class="facility-name">'+f.level+'</div></div>';
+  h+='<div class="facility-reason">'+f.reason+'</div></div>';
+
+  if(logic.redFlags.length>0){
+    h+='<div class="redflag-card">';
+    h+='<div class="label" style="color:#dc2626;margin-bottom:8px;">⚠ 警戒疾患（タップで詳細へ）</div>';
+    logic.redFlags.forEach(function(rf){
+      h+='<div class="redflag-item" onclick="state.openDisease=\''+rf.id+'\';render();setTimeout(function(){var el=document.getElementById(\'disease-'+rf.id+'\');if(el)el.scrollIntoView({behavior:\'smooth\',block:\'center\'});},150);">'+rf.name;
+      h+='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    });
+    h+='</div>';
+  }
+
+  h+='<div class="card">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);padding-bottom:10px;margin-bottom:10px;">';
+  h+='<div class="label">Watchlist</div>';
+  h+='<span style="font-size:10px;font-weight:600;color:#2563eb;background:#eff6ff;padding:3px 10px;border-radius:20px;">'+state.weeks+'週 '+state.days+'日</span>';
+  h+='</div>';
+  diseases.forEach(function(d){
+    var isActive=state.weeks>=d.range[0]&&state.weeks<=d.range[1];
+    var isOpen=state.openDisease===d.id;
+    h+='<div class="watchlist-item'+(isActive?' active':'')+'" id="disease-'+d.id+'">';
+    h+='<div class="watchlist-header" onclick="openDisease(\''+d.id+'\')">';
+    h+='<div style="display:flex;align-items:center;gap:8px;">';
+    h+='<div class="watchlist-dot'+(isActive?' active':'')+'"></div>';
+    h+='<span style="font-size:13px;font-weight:600;color:'+(isActive?'#7f1d1d':'var(--text2)')+'">'+d.name+'</span></div>';
+    h+=isOpen?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
+    h+='</div>';
+    if(isOpen){
+      h+='<div class="watchlist-detail">';
+      h+='<div class="detail-sec" style="background:var(--bg2);"><div class="label" style="margin-bottom:3px;">Pathology</div><div style="font-size:12px;font-weight:500;line-height:1.6;color:var(--text);">'+d.pathology+'</div></div>';
+      h+='<div class="detail-sec" style="background:#fff5f5;border:0.5px solid #fca5a5;"><div class="label" style="margin-bottom:3px;color:#dc2626;">Findings（所見）</div><div style="font-size:12px;font-weight:500;line-height:1.6;color:#7f1d1d;">'+d.findings+'</div></div>';
+      h+='<div class="detail-sec" style="background:#eff6ff;border:0.5px solid #93c5fd;"><div class="label" style="margin-bottom:3px;color:#1d4ed8;">EMS Action（対応）</div><div style="font-size:12px;font-weight:500;line-height:1.6;color:#1e3a8a;">'+d.action+'</div></div>';
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+function renderReference(){
+  var glContent='<div class="ref-card">'+
+  '<div class="ref-title" style="color:#dc2626;">GL2023 産科救急 重要基準</div>'+
+  '<div style="margin-bottom:14px;">'+
+  '<div class="label" style="margin-bottom:8px;color:#dc2626;">Shock Index 判定基準（GL2023 CQ418-2・産科危機的出血への対応指針2022）</div>'+
+  '<div style="display:flex;flex-direction:column;gap:6px;">'+
+  ['<1.0|正常範囲|#f0fdf4|#166534','1.0〜1.4|要注意 → 輸血準備・循環不全を疑う|#fefce8|#b45309','1.5〜1.9|危険 → 推定出血約2.5L（目安）・産科危機的出血の宣言基準・大量輸血を考慮|#fee2e2|#dc2626','≥2.0|最重篤 → 出血量の公式記載なし（2.5Lを超える可能性）・大量輸血プロトコル適応|#7f1d1d|#fff'].map(function(r){
+    var p=r.split('|');
+    return'<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;background:'+p[2]+';"><div style="font-size:15px;font-weight:700;font-family:var(--mono);color:'+p[3]+';min-width:70px;">SI '+p[0]+'</div><div style="font-size:11px;font-weight:600;color:'+p[3]+';">'+p[1]+'</div></div>';
+  }).join('')+
+  '</div>'+
+  '<div style="font-size:10px;color:var(--text2);margin-top:6px;padding:8px;background:var(--bg2);border-radius:8px;">GL2023 CQ418-2: 「SI=1は約1.5L、SI=1.5は約2.5Lの出血量が推測される」（確定した換算値ではなく目安）。SI≥1で輸血準備・高次施設への搬送考慮、SI≥1.5・産科DICスコア≥8点・フィブリノゲン150mg/dL以下で産科危機的出血を宣言（対応指針2022）。「要注意」「危険」「最重篤」の区分名とSI≥2.0の扱いは本アプリ独自で、指針の記載ではありません。血圧低下はSI上昇より遅れて出現するため、SIによる早期評価が重要。</div>'+
+  '</div>'+
+  '<div style="margin-bottom:14px;">'+
+  '<div class="label" style="margin-bottom:8px;color:#7c3aed;">HDP 診断基準（GL2023 CQ309-1）</div>'+
+  '<div style="display:flex;flex-direction:column;gap:6px;">'+
+  '<div style="padding:10px 12px;border-radius:9px;background:#faf5ff;border:0.5px solid #c084fc;"><div style="font-size:12px;font-weight:700;color:#6b21a8;">HDP診断（要管理）</div><div style="font-size:12px;font-weight:600;color:#581c87;margin-top:3px;">sBP ≥ 140mmHg または dBP ≥ 90mmHg</div></div>'+
+  '<div style="padding:10px 12px;border-radius:9px;background:#fef2f2;border:1.5px solid #dc2626;"><div style="font-size:12px;font-weight:700;color:#991b1b;">重症HDP（高血圧緊急症）</div><div style="font-size:12px;font-weight:600;color:#7f1d1d;margin-top:3px;">sBP ≥ 160mmHg または dBP ≥ 110mmHg → 速やかに降圧</div></div>'+
+  '<div style="padding:10px 12px;border-radius:9px;background:var(--bg2);border:0.5px solid var(--border);font-size:11px;color:var(--text2);line-height:1.6;">測定のタイミング：安静後5分以上経過してから測定。1回だけの測定値で判断しない。</div>'+
+  '</div></div>'+
+  '<div style="margin-bottom:14px;">'+
+  '<div class="label" style="margin-bottom:8px;color:#dc2626;">絶対禁忌（やってはいけないこと）</div>'+
+  '<div style="display:flex;flex-direction:column;gap:6px;">'+
+  [
+    {cond:'前置胎盤の疑い',action:'内診・経腟超音波操作 → 大量出血を誘発'},
+    {cond:'子宮頸管無力症（胎胞脱出）',action:'腹圧をかける体位・起立 → 急速分娩を誘発'},
+    {cond:'子癇（痙攣中）',action:'バイトブロック強制使用 → 嘔吐・誤嚥・歯牙損傷リスク'},
+    {cond:'20週以降',action:'仰臥位での長時間搬送 → 大動脈圧迫で循環悪化（左側臥位推奨）'}
+  ].map(function(item){
+    return'<div style="background:#fff5f5;border-radius:9px;padding:9px 12px;border-left:4px solid #dc2626;"><div style="font-size:11px;font-weight:700;color:#991b1b;">【禁忌】'+item.cond+'</div><div style="font-size:11px;color:#7f1d1d;margin-top:2px;">'+item.action+'</div></div>';
+  }).join('')+
+  '</div></div>'+
+  '<div>'+
+  '<div class="label" style="margin-bottom:8px;">体位管理（GL2023）</div>'+
+  '<div style="display:flex;flex-direction:column;gap:6px;">'+
+  '<div style="padding:10px 12px;border-radius:9px;background:#fef2f2;border:1.5px solid #f87171;"><div style="font-size:12px;font-weight:700;color:#991b1b;">妊娠20週以降 → 左側臥位 厳守</div><div style="font-size:11px;color:#7f1d1d;margin-top:3px;">仰臥位低血圧症候群（大動脈・下大静脈圧迫）の予防。GL2023：左側臥位が最善、仰臥位は好ましくない。</div></div>'+
+  '<div style="padding:10px 12px;border-radius:9px;background:#fffbeb;border:0.5px solid #fcd34d;"><div style="font-size:12px;font-weight:700;color:#b45309;">妊娠12〜19週 → 左側臥位 推奨</div><div style="font-size:11px;color:#92400e;margin-top:3px;">子宮増大に伴い仰臥位の影響が出始める時期。可能であれば左側臥位。</div></div>'+
+  '<div style="padding:10px 12px;border-radius:9px;background:var(--bg2);border:0.5px solid var(--border);"><div style="font-size:12px;font-weight:700;color:var(--text);">子宮頸管無力症（胎胞脱出） → トレンデレンブルグ位</div><div style="font-size:11px;color:var(--text2);margin-top:3px;">頭低位（逆トレンデレンブルグ）は禁忌。胎胞への重力を軽減する体位を選択。</div></div>'+
+  '</div></div>'+
+  '</div>';
+
+  return '<div class="ref-card">'+
+  '<div class="ref-title" style="color:#1d4ed8;">📋 母子手帳の確認ポイント</div>'+
+  '<div style="background:#eff6ff;border-radius:12px;padding:14px;border:0.5px solid #bfdbfe;display:flex;flex-direction:column;gap:10px;">'+
+  [
+    {icon:'📅',label:'妊娠週数・予定日',desc:'分娩予定日と現在の週数を確認。'},
+    {icon:'👶',label:'胎児の人数（単胎/多胎）',desc:'多胎は必ずNICU完備施設へ搬送。'},
+    {icon:'🔄',label:'初産婦・経産婦',desc:'経産婦は搬送中の分娩進行に注意。'},
+    {icon:'🏥',label:'経過異常・かかりつけ病院',desc:'前置胎盤等の既往。主治医へ連絡。'},
+    {icon:'❤️',label:'合併症・既往',desc:'喘息、心疾患、アレルギー等。'}
+  ].map(function(item){
+    return'<div style="display:flex;gap:10px;align-items:flex-start;">'+
+    '<div style="width:30px;height:30px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:0.5px solid #bfdbfe;">'+item.icon+'</div>'+
+    '<div><div style="font-size:12px;font-weight:600;color:#1e3a8a;">'+item.label+'</div>'+
+    '<div style="font-size:11px;color:#3730a3;opacity:0.8;margin-top:2px;">'+item.desc+'</div></div></div>';
+  }).join('')+
+  '</div>'+
+  '<div style="margin-top:12px;background:#fef2f2;border:1.5px dashed #fca5a5;border-radius:10px;padding:12px;">'+
+  '<div style="font-size:12px;font-weight:500;color:#991b1b;line-height:1.6;"><span style="background:#dc2626;color:white;padding:2px 6px;border-radius:4px;font-size:9px;margin-right:6px;">ALERT</span><b>35歳以上</b>は高齢妊娠に分類。HDPや胎盤異常の合併率が高いため注意。</div></div>'+
+  '</div>'+
+  '<div class="ref-card">'+
+  '<div class="ref-title" style="color:#dc2626;">🏥 医療機関の機能解説</div>'+
+  '<div style="display:flex;flex-direction:column;gap:10px;">'+
+  '<div style="background:#fff5f5;border-radius:12px;padding:14px;"><div style="font-size:14px;font-weight:600;color:#991b1b;margin-bottom:6px;">総合周産期母子医療センター</div><div style="font-size:11px;color:var(--text2);line-height:1.6;">MFICUおよびNICUを完備。超早産児や重篤母体合併症に対応する、日本の周産期医療の頂点施設。</div></div>'+
+  '<div style="background:#eff6ff;border-radius:12px;padding:14px;"><div style="font-size:14px;font-weight:600;color:#1e40af;margin-bottom:6px;">地域周産期母子医療センター</div><div style="font-size:11px;color:var(--text2);line-height:1.6;">NICUを完備し、比較高度な周産期医療を担う拠点。総合センターへの橋渡しも行う。</div></div>'+
+  '<div style="background:#fff7ed;border-radius:12px;padding:14px;border:0.5px solid #fed7aa;"><div style="font-size:14px;font-weight:600;color:#9a3412;margin-bottom:6px;">妊娠終結（Termination）</div><div style="font-size:11px;color:var(--text2);line-height:1.6;">母体または胎児の救急事態により人為的に妊娠を終了させること。緊急手術が必要です。</div></div>'+
+  '</div></div>'+
+  '<div class="ref-card">'+
+  '<div class="label" style="margin-bottom:12px;">Specialized Units</div>'+
+  [
+    {unit:'MFICU',desc:'母体・胎児集中治療室。重症妊婦を24時間監視管理。'},
+    {unit:'NICU',desc:'新生児集中治療室。高度な治療を行うユニット。'},
+    {unit:'GCU',desc:'継続保育室。安定した児が退院に向けた管理を受けるユニット。'}
+  ].map(function(u){
+    return'<div style="background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:8px;border:0.5px solid var(--border);">'+
+    '<div style="font-size:12px;font-weight:700;font-family:var(--mono);margin-bottom:4px;color:var(--text);">'+u.unit+'</div>'+
+    '<div style="font-size:11px;color:var(--text2);line-height:1.5;">'+u.desc+'</div></div>';
+  }).join('')+
+  '</div>'+glContent;
+}
+
+function render(){
+  var logic=getLogic();
+  var main=document.getElementById('main-content');
+  if(state.tab==='assessment')main.innerHTML=renderAssessment();
+  else if(state.tab==='reasoning')main.innerHTML=renderReasoning();
+  else main.innerHTML=renderReference();
+  var pos=logic.pos;
+  var footer=document.getElementById('footer');
+  document.getElementById('footer-pos').textContent=pos.label;
+  var si=getSI();
+  var siEl=document.getElementById('footer-si');
+  siEl.textContent=si?si.toFixed(2):'--';
+  siEl.style.color=si&&si>1.0?'#fca5a5':'#fff';
+  if(pos.strict){
+    footer.style.background='#b91c1c';
+    document.getElementById('footer-pos').style.animation='pulse 1.5s infinite';
+  }else{
+    footer.style.background='#1e293b';
+    document.getElementById('footer-pos').style.animation='none';
+  }
+}
+
+render();
+</script>
+</body>
+</html>

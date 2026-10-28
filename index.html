@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="救急支援">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>救急アセスメント総合支援</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;background:#0f0f1a;color:#f0f0f0;font-size:15px;}
+
+/* ========== ランチャー ========== */
+#launcher{
+  position:fixed;inset:0;
+  background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#0d1117 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  z-index:1000;
+  padding:calc(env(safe-area-inset-top) + 28px) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 16px) env(safe-area-inset-left);
+  transition:opacity 0.4s,transform 0.4s;
+}
+#launcher.hidden{opacity:0;pointer-events:none;transform:scale(0.96);}
+
+.launcher-header{text-align:center;margin-bottom:20px;}
+.launcher-title{font-size:22px;font-weight:800;letter-spacing:-0.5px;
+  background:linear-gradient(135deg,#64ffda,#7c83ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;}
+.launcher-sub{font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;letter-spacing:0.05em;}
+
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:380px;padding:0 16px;}
+
+.app-card{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px;
+  padding:14px 14px;
+  cursor:pointer;
+  transition:all 0.2s;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  position:relative;overflow:hidden;
+}
+.app-card::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  transition:opacity 0.2s;border-radius:18px;
+}
+.app-card.pediatric::before{background:linear-gradient(135deg,rgba(29,158,117,0.3),rgba(29,158,117,0.05));}
+.app-card.obstetric::before{background:linear-gradient(135deg,rgba(185,28,28,0.3),rgba(185,28,28,0.05));}
+.app-card.burn::before{background:linear-gradient(135deg,rgba(216,90,48,0.3),rgba(216,90,48,0.05));}
+.app-card.ecg::before{background:linear-gradient(135deg,rgba(29,110,158,0.3),rgba(29,110,158,0.05));}
+.app-card.stroke::before{background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(124,58,237,0.05));}
+.app-card.abdominal::before{background:linear-gradient(135deg,rgba(14,116,144,0.3),rgba(14,116,144,0.05));}
+.app-card:active::before{opacity:1;}
+.app-card:active{transform:scale(0.96);border-color:rgba(255,255,255,0.2);}
+
+.app-icon{font-size:26px;line-height:1;}
+.app-name{font-size:13px;font-weight:700;color:#fff;line-height:1.3;}
+.app-desc{font-size:10px;color:rgba(255,255,255,0.45);line-height:1.5;}
+.app-tag{
+  font-size:9px;font-weight:700;letter-spacing:0.08em;
+  padding:2px 7px;border-radius:20px;align-self:flex-start;
+}
+.app-card.pediatric .app-tag{background:rgba(29,158,117,0.2);color:#64d4a8;}
+.app-card.obstetric .app-tag{background:rgba(185,28,28,0.2);color:#f87171;}
+.app-card.burn .app-tag{background:rgba(216,90,48,0.2);color:#fb923c;}
+.app-card.ecg  .app-tag{background:rgba(29,110,158,0.2);color:#60a5fa;}
+.app-card.stroke .app-tag{background:rgba(124,58,237,0.2);color:#c084fc;}
+.app-card.abdominal .app-tag{background:rgba(14,116,144,0.2);color:#22d3ee;}
+.frame-header.abdominal{background:#0e7490;}
+
+.launcher-footer{margin-top:12px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center;padding:0 16px;}
+
+/* ========== アプリフレーム ========== */
+.app-frame{
+  position:fixed;inset:0;z-index:500;
+  display:none;flex-direction:column;
+  background:#f0f0ee;
+  transition:opacity 0.3s,transform 0.3s;
+  opacity:0;transform:translateY(20px);
+}
+.app-frame.visible{display:flex;opacity:1;transform:translateY(0);}
+
+.frame-header{
+  position:relative;
+  display:flex;align-items:center;
+  padding:12px 16px 10px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  color:#fff;
+  flex-shrink:0;
+  z-index:10;
+}
+.frame-header.pediatric{background:#1D9E75;}
+.frame-header.obstetric{background:#b91c1c;}
+.frame-header.burn{background:#7c2d12;}
+.frame-header.ecg{background:#1a4a7c;}
+.frame-header.stroke{background:#5b21b6;}
+
+.back-btn{
+  width:36px;height:36px;border-radius:50%;
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.2);color:#fff;
+  font-size:18px;flex-shrink:0;
+  transition:background 0.15s;margin-right:12px;
+  font-family:inherit;
+}
+.back-btn:active{background:rgba(255,255,255,0.35);}
+.frame-title{font-size:16px;font-weight:700;flex:1;}
+
+.frame-body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.frame-body iframe{
+  width:100%;height:100%;border:none;display:block;
+}
+</style>
+</head>
+<body>
+
+<!-- ランチャー -->
+<div id="launcher">
+  <div class="launcher-header">
+    <div class="launcher-title">救急アセスメント<br>総合支援</div>
+    <div class="launcher-sub">Emergency Assessment Suite</div>
+  </div>
+  <div class="app-grid">
+    <div class="app-card pediatric" onclick="openApp('pediatric')">
+      <div class="app-icon">👶</div>
+      <div class="app-name">小児<br>アセスメント</div>
+      <div class="app-desc">PAT法 → ABCDE → SAMPLE</div>
+      <div class="app-tag">PEDIATRIC</div>
+    </div>
+    <div class="app-card obstetric" onclick="openApp('obstetric')">
+      <div class="app-icon">🤰</div>
+      <div class="app-name">産科<br>救急 PRO</div>
+      <div class="app-desc">妊娠週数・症候・搬送先判定</div>
+      <div class="app-tag">OBS EMERGENCY</div>
+    </div>
+    <div class="app-card burn" onclick="openApp('burn')">
+      <div class="app-icon">🔥</div>
+      <div class="app-name">熱傷面積計算</div>
+      <div class="app-desc">ルールオブナイン・ランド・ブラウダー法・BI/PBI算出</div>
+      <div class="app-tag">BURN ASSESSMENT</div>
+    </div>
+    <div class="app-card ecg" onclick="openApp('ecg')">
+      <div class="app-icon">🫀</div>
+      <div class="app-name">12誘導心電図 参照</div>
+      <div class="app-desc">ST診断基準・疾患別波形・12誘導マップ・所見→判断・測定プロトコール</div>
+      <div class="app-tag">ECG REFERENCE</div>
+    </div>
+    <div class="app-card stroke" onclick="openApp('stroke')">
+      <div class="app-icon">🧠</div>
+      <div class="app-name">脳卒中評価</div>
+      <div class="app-desc">BE-FAST・CPSS・RACE・GCS・NIHSS・mRS</div>
+      <div class="app-tag">STROKE</div>
+    </div>
+    <div class="app-card abdominal" onclick="openApp('abdominal')">
+      <div class="app-icon">🫃</div>
+      <div class="app-name">腹痛<br>臨床推論支援</div>
+      <div class="app-desc">OPQRST・Red Flag → 鑑別52疾患</div>
+      <div class="app-tag">ABDOMINAL</div>
+    </div>
+  </div>
+  <div class="launcher-footer">各アプリをタップして起動</div>
+</div>
+
+<!-- 小児アセスメント -->
+<div class="app-frame" id="frame-pediatric">
+  <div class="frame-header pediatric">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">小児アセスメント支援</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-pediatric" src="" title="小児アセスメント支援"></iframe>
+  </div>
+</div>
+
+<!-- 産科救急 -->
+<div class="app-frame" id="frame-obstetric">
+  <div class="frame-header obstetric">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">OBS Emergency PRO</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-obstetric" src="" title="OBS Emergency PRO"></iframe>
+  </div>
+</div>
+
+<!-- 熱傷計算 -->
+<div class="app-frame" id="frame-burn">
+  <div class="frame-header burn">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">熱傷面積計算</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-burn" src="" title="熱傷面積計算"></iframe>
+  </div>
+</div>
+
+<!-- 12誘導心電図 -->
+<div class="app-frame" id="frame-ecg">
+  <div class="frame-header ecg">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">12誘導心電図 参照</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-ecg" src="" title="12誘導心電図 参照アプリ"></iframe>
+  </div>
+</div>
+
+<!-- 脳卒中評価 -->
+<div class="app-frame" id="frame-stroke">
+  <div class="frame-header stroke">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">🧠 脳卒中評価</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-stroke" src="" title="脳卒中評価"></iframe>
+  </div>
+</div>
+
+<!-- 腹痛臨床推論 -->
+<div class="app-frame" id="frame-abdominal">
+  <div class="frame-header abdominal">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">腹痛 臨床推論支援</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-abdominal" src="" title="腹痛 臨床推論支援"></iframe>
+  </div>
+</div>
+
+<script>
+const APP_SRCS = {
+  pediatric: 'pediatric.html',
+  obstetric: 'obstetric.html',
+  burn: 'burn.html',
+  ecg: 'ecg.html',
+  stroke: 'stroke.html',
+  abdominal: 'abdominal.html',
+};
+const loaded = {};
+let current = null;
+
+function openApp(name) {
+  const frame = document.getElementById('frame-' + name);
+  const iframe = document.getElementById('iframe-' + name);
+  if (!loaded[name]) {
+    iframe.src = APP_SRCS[name];
+    loaded[name] = true;
+  }
+  current = name;
+  document.getElementById('launcher').classList.add('hidden');
+  frame.style.display = 'flex';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      frame.classList.add('visible');
+    });
+  });
+}
+
+function closeApp() {
+  if (!current) return;
+  const frame = document.getElementById('frame-' + current);
+  frame.classList.remove('visible');
+  setTimeout(() => {
+    frame.style.display = 'none';
+    document.getElementById('launcher').classList.remove('hidden');
+    current = null;
+  }, 300);
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.log('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
