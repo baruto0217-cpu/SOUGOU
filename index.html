@@ -56,6 +56,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI'
 .app-card.ecg::before{background:linear-gradient(135deg,rgba(29,110,158,0.3),rgba(29,110,158,0.05));}
 .app-card.stroke::before{background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(124,58,237,0.05));}
 .app-card.abdominal::before{background:linear-gradient(135deg,rgba(14,116,144,0.3),rgba(14,116,144,0.05));}
+.app-card.seishinka::before{background:linear-gradient(135deg,rgba(79,70,229,0.3),rgba(79,70,229,0.05));}
 .app-card:active::before{opacity:1;}
 .app-card:active{transform:scale(0.96);border-color:rgba(255,255,255,0.2);}
 
@@ -72,7 +73,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI'
 .app-card.ecg  .app-tag{background:rgba(29,110,158,0.2);color:#60a5fa;}
 .app-card.stroke .app-tag{background:rgba(124,58,237,0.2);color:#c084fc;}
 .app-card.abdominal .app-tag{background:rgba(14,116,144,0.2);color:#22d3ee;}
+.app-card.seishinka .app-tag{background:rgba(79,70,229,0.2);color:#a5b4fc;}
 .frame-header.abdominal{background:#0e7490;}
+.frame-header.seishinka{background:#1f3a5f;}
 
 .launcher-footer{margin-top:12px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center;padding:0 16px;}
 
@@ -164,6 +167,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI'
       <div class="app-desc">OPQRST・Red Flag → 鑑別52疾患</div>
       <div class="app-tag">ABDOMINAL</div>
     </div>
+    <div class="app-card seishinka" onclick="openApp('seishinka')">
+      <div class="app-icon">🧩</div>
+      <div class="app-name">精神科<br>救急対応</div>
+      <div class="app-desc">観察基準8・搬送先・措置入院・精神保健福祉法</div>
+      <div class="app-tag">PSYCHIATRIC</div>
+    </div>
   </div>
   <div class="launcher-footer">各アプリをタップして起動</div>
 </div>
@@ -223,6 +232,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI'
   </div>
 </div>
 
+<!-- 精神科救急対応 -->
+<div class="app-frame" id="frame-seishinka">
+  <div class="frame-header seishinka">
+    <button class="back-btn" onclick="closeApp()">←</button>
+    <span class="frame-title">精神科救急対応</span>
+  </div>
+  <div class="frame-body">
+    <iframe id="iframe-seishinka" src="" title="精神科救急対応"></iframe>
+  </div>
+</div>
+
 <!-- 腹痛臨床推論 -->
 <div class="app-frame" id="frame-abdominal">
   <div class="frame-header abdominal">
@@ -242,6 +262,7 @@ const APP_SRCS = {
   ecg: 'ecg.html',
   stroke: 'stroke.html',
   abdominal: 'abdominal.html',
+  seishinka: 'seishinka.html',
 };
 const loaded = {};
 let current = null;
