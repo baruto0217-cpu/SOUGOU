@@ -1,6 +1,6 @@
 // Service Worker — 救急アセスメント総合支援
 // キャッシュ名（バージョンを上げると古いキャッシュが削除される）
-const CACHE_NAME = 'emergency-suite-v34';
+const CACHE_NAME = 'emergency-suite-v35';
 
 // キャッシュするファイル一覧
 const CACHE_FILES = [
