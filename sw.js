@@ -1,6 +1,8 @@
 // Service Worker — 救急アセスメント総合支援
 // キャッシュ名（バージョンを上げると古いキャッシュが削除される）
-const CACHE_NAME = 'emergency-suite-v35';
+// 同じ公開先(baruto0217-cpu.github.io)のほかのアプリ(KUNREN等)の保存には触らない。emergency-suite- で始まるものだけ扱う
+const CACHE_PREFIX = 'emergency-suite-';
+const CACHE_NAME = CACHE_PREFIX + 'v36';
 
 // キャッシュするファイル一覧
 const CACHE_FILES = [
@@ -36,12 +38,12 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// アクティベート時：古いキャッシュを削除
+// アクティベート時：このアプリの古いキャッシュだけを削除
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
+        keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
             .map(key => caches.delete(key))
       )
     )
@@ -51,8 +53,10 @@ self.addEventListener('activate', event => {
 
 // フェッチ時：キャッシュ優先（Cache First）
 self.addEventListener('fetch', event => {
+  // ほかのサイトへの通信と、GET以外はそのまま通す
+  if (event.request.method !== 'GET' || new URL(event.request.url).origin !== location.origin) return;
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then(cached => {
+    caches.open(CACHE_NAME).then(cache => cache.match(event.request, { ignoreSearch: true })).then(cached => {
       if (cached) return cached;
       // キャッシュになければネットワークから取得してキャッシュに追加
       return fetch(event.request).then(response => {
@@ -65,8 +69,8 @@ self.addEventListener('fetch', event => {
         });
         return response;
       }).catch(() => {
-        // オフラインでキャッシュにもない場合はindex.htmlを返す
-        return caches.match('./index.html');
+        // オフラインでキャッシュにもない場合はこのアプリのindex.htmlを返す
+        return caches.open(CACHE_NAME).then(cache => cache.match('./index.html'));
       });
     })
   );
