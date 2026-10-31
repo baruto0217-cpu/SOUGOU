@@ -694,6 +694,7 @@ function renderSummary(){
       h+=`<div style="font-size:11px;color:#636366;padding:8px 0 4px;line-height:1.5">入力情報をもとにした<b>可能性スコア</b>（統計的確率ではありません）。高いほど入力情報との整合性が高いことを示します。</div>`;
       diseases.forEach((d,i)=>{const pct=d.score;const col=pct>=70?'#c0392b':pct>=40?'#e67e22':'#27ae60';const rank=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';const dname=d.name.replace(/\n/g,'／');h+=`<div class="drow"><div class="drow-top"><span class="dname">${rank}${d.icon} ${dname}</span><span class="dpct" style="color:${col}">${pct}</span></div><div class="dbar-row"><div class="dbar-wrap"><div class="dbar-fill" style="width:${pct}%;background:${col}"></div></div></div><div class="dreason">${d.reasons.join('・')}</div></div>`;});
       h+=`<div class="disclaimer">⚠️ このスコアは統計的確率ではなく、入力内容との整合性の目安です。確定診断は必ず医師が行います。</div>`;
+      h+=`<div class="disclaimer">🔴 脳腫瘍でも、進行する頭痛・痙攣・片麻痺などの神経症状が出ることがあります（区別には画像検査が必要）。突然出た片麻痺・言葉の障害などの神経症状は脳卒中として扱い、最終健常確認時刻を確かめて迅速に搬送します。</div>`;
       h+=`</div></div>`;
     }
   }

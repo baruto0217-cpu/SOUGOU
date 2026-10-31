@@ -571,6 +571,14 @@ body {
   </div>
 
   <!-- 総合評価 -->
+  <div class="section" id="tab-guide">
+    <div class="card">
+      <div class="card-title">疾患別 臨床推論・対応ガイド</div>
+      <p style="font-size:13px;color:#666;line-height:1.7;margin-bottom:6px">代表的な小児救急疾患の病態・観察のポイント・現場対応です。タップして開きます。処置は資格・医師の指示・地域MCプロトコルの範囲で行います。</p>
+      <div id="guide-cards"></div>
+    </div>
+  </div>
+
   <div class="section" id="tab-summary">
     <div class="card">
       <div class="card-title">総合評価サマリー</div>
@@ -612,6 +620,7 @@ body {
   <button class="nav-btn" id="nav-vital" onclick="showTab('vital',this)"><span class="nav-icon">💓</span><span class="nav-label">バイタル</span></button>
   <button class="nav-btn" id="nav-sample" onclick="showTab('sample',this)"><span class="nav-icon">📋</span><span class="nav-label">2次評価</span></button>
   <button class="nav-btn" id="nav-summary" onclick="showTab('summary',this)"><span class="nav-icon">📊</span><span class="nav-label">総合</span></button>
+  <button class="nav-btn" id="nav-guide" onclick="showTab('guide',this)"><span class="nav-icon">📖</span><span class="nav-label">疾患</span></button>
 </nav>
 <script>function stepVal(id, delta) {
   const el = document.getElementById(id);
@@ -642,6 +651,7 @@ function showTab(id, btn) {
   document.getElementById('tab-' + id).classList.add('active');
   document.getElementById('nav-' + id).classList.add('active');
   if (id === 'summary') updateSummary();
+  if (id === 'guide') renderGuide();
   window.scrollTo(0, 0);
 }
 let openPat = null;
@@ -794,75 +804,82 @@ const DISEASES = [
    check:function(ab,pat,age){return['warn','danger'].includes(ab.b)||['warn','danger'].includes(pat.B);},
    pathology:'気道の慢性炎症による可逆的な気道狭窄。小児は気道が細く、わずかな浮腫・分泌物で重症化しやすい。夜間〜早朝に増悪しやすい。',
    findings:'呼気性喘鳴（ヒューヒュー）、陥没呼吸、補助筋使用。silent chest（呼吸音消失）は最危険サイン。SpO₂低下・チアノーゼ・傾眠・意識低下は呼吸不全への移行を示す。',
-   action:'起坐位保持・酸素投与（SpO₂ 93〜95%目標）。自己吸入薬（β₂刺激薬）があれば使用を促す。中等症〜重症：イプラトロピウム臭化物の追加を考慮。silent chest・SpO₂低下 → BVM換気準備・迅速搬送。',
-   alert:'silent chestや傾眠・錯乱は生命危機。即時ICU相談・迅速搬送。'},
+   action:'楽な姿勢（起坐位など）を保ち、SpO₂を見ながら酸素投与。本人に処方された発作時吸入薬（β₂刺激薬）は、使用状況と指示内容を確認し所属プロトコルに従って補助。silent chest・SpO₂低下・傾眠 → BVM換気の準備・迅速搬送。',
+   alert:'silent chestや傾眠・錯乱は生命危機。迅速搬送し、搬送先へ早めに連絡。'},
   {id:'croup',name:'クループ症候群',icon:'🗣️',color:'#1a6fb0',
    check:function(ab,pat,age){if(!['infant','toddler'].includes(age)&&age)return false;return['warn','danger'].includes(ab.a)||['warn','danger'].includes(ab.b);},
    pathology:'ウイルス性上気道炎（主にパラインフルエンザウイルス）による声門下浮腫。生後6ヶ月〜3歳に多い。夜間に急激に悪化することが多い。',
    findings:'犬吠様咳嗽（ケーンケーン）・吸気性喘鳴（stridor）・嗄声が3徴。安静時にも喘鳴があれば中等症以上。啼泣・興奮で急激に悪化。',
-   action:'絶対に興奮させない・泣かせない。親に抱っこさせた状態で搬送。フリーフロー酸素投与。咽頭を覗き込まない（喉頭蓋炎との鑑別に注意）。',
+   action:'刺激を最小限にし、保護者に抱っこしてもらうなど楽な姿勢で搬送。フリーフロー酸素投与。咽頭を覗き込まない・口の中を刺激しない（喉頭蓋炎との鑑別に注意）。呼吸不全では気道・換気の管理を優先。',
    alert:'喉頭蓋炎との鑑別が重要：流涎・高熱・前傾姿勢・犬吠様咳嗽なし・強い不安感 → 即時搬送。'},
   {id:'bronchiolitis',name:'細気管支炎（RS等）',icon:'🫁',color:'#1a6fb0',
    check:function(ab,pat,age){if(!['neonate','infant'].includes(age)&&age)return false;return['warn','danger'].includes(ab.b)||['warn','danger'].includes(pat.B);},
-   pathology:'主にRSウイルスによる細気管支の炎症・浮腫。2歳以下、特に生後6ヶ月未満の乳児で重症化しやすい。冬〜春に流行。',
+   pathology:'主にRSウイルスによる細気管支の炎症・浮腫。2歳以下、特に生後6ヶ月未満の乳児で重症化しやすい。流行時期は年・地域で変わるため、季節だけで除外しない。',
    findings:'喘鳴（呼気性）＋多呼吸が主体。哺乳不良・活動性低下は重症のサイン。無呼吸発作（特に早産児・低月齢）に注意。SpO₂の継続モニタリングが重要。',
    action:'酸素投与・SpO₂管理。無呼吸発作に備えBVMを常に準備。早産・低月齢・基礎疾患ありは早期搬送。アルブテロール・ステロイドは効果なし。',
    alert:''},
   {id:'febrile_seizure',name:'熱性痙攣',icon:'⚡',color:'#6c2fa0',
    check:function(ab,pat,age){if(!['infant','toddler','preschool'].includes(age)&&age)return false;return['warn','danger'].includes(ab.d)||['warn','danger'].includes(pat.A);},
    pathology:'発熱に伴う痙攣。主に生後6〜60ヶ月に好発。単純型（15分未満・全身性・一発熱機会内に反復なし）は多くは良性。複雑型（焦点性・15分以上・一発熱機会内に反復のいずれか）は要注意。',
-   findings:'痙攣の性状（全身性か片側か）・持続時間が重要。発作後意識回復の遅れ（Todd麻痺）に注意。髄膜炎との鑑別（頭痛・頸部硬直・光過敏）が必須。',
-   action:'側臥位・気道確保（口に何も入れない）。酸素投与・SpO₂モニタリング。5分以上持続 → 迅速搬送（ベンゾジアゼピン投与は医師の指示・所属プロトコルに従う）。',
-   alert:'15分以上・反復・1歳未満・発作後の意識不良・髄膜刺激症状 → 髄膜炎などを疑い緊急搬送。'},
+   findings:'痙攣の性状（全身性か片側か）・持続時間が重要。発作後の意識回復不良と、片側の脱力などの発作後麻痺（Todd麻痺）をそれぞれ確認。持続する意識障害や局所の神経症状では他の病気も疑う。髄膜炎との鑑別（頭痛・項部硬直・大泉門膨隆・光過敏）が必須。',
+   action:'側臥位・気道確保（口に何も入れない）。酸素投与・SpO₂モニタリング。5分以上続く、または意識が戻らないまま繰り返す場合は、15分まで待たずに重積状態として対応し、ABC管理・迅速搬送・医師への連絡を行う（ベンゾジアゼピン投与は医師の指示・所属プロトコルに従う）。',
+   alert:'発作後の意識回復不良・全身状態不良・髄膜刺激症状・大泉門膨隆・紫斑 → 中枢神経感染症や敗血症を疑い緊急搬送。複雑型（焦点性・15分以上・24時間以内の反復）や1歳未満は慎重に評価。'},
   {id:'meningitis',name:'髄膜炎・脳炎',icon:'🧠',color:'#6c2fa0',
    check:function(ab,pat,age){return['warn','danger'].includes(ab.d);},
    pathology:'髄膜・脳実質の感染性炎症。乳幼児は症状が非典型的で見逃しやすい。細菌性髄膜炎は時間単位で進行し致死的になりうる。',
-   findings:'三主徴：発熱・頭痛・項部硬直（乳児では不明瞭）。乳児では不機嫌・哺乳不良・大泉門膨隆。出血斑（点状〜紫斑）は髄膜炎菌性を強く示唆。光過敏・音過敏も確認。',
+   findings:'主な所見：発熱・頭痛・項部硬直・意識の変化（乳児では典型的な所見を欠くことが多い）。乳児では不機嫌・哺乳不良・大泉門膨隆。紫斑（点状出血〜紫斑）を伴う発熱は重症感染症を疑う。光過敏・音過敏も確認。',
    action:'迅速搬送。細菌性髄膜炎の可能性を搬送先に申し送る。意識障害・痙攣合併は最緊急。',
-   alert:'出血斑（紫斑）を認めた場合は髄膜炎菌性の最重症型。直ちに緊急搬送。'},
+   alert:'紫斑を伴う発熱・循環不全は、侵襲性髄膜炎菌感染症を含む重症感染症を疑い、直ちに緊急搬送。'},
   {id:'anaphylaxis',name:'アナフィラキシー',icon:'🌡️',color:'#c0392b',
    check:function(ab,pat,age){const aAbn=['warn','danger'].includes(ab.a)||['warn','danger'].includes(pat.A);const cAbn=['warn','danger'].includes(ab.c)||['warn','danger'].includes(pat.C);return aAbn||cAbn;},
    pathology:'アレルゲン（食物・薬物・ハチ毒など）による全身性の過敏反応。急速に気道浮腫・血圧低下が進行する。数分で致死的になりうる。',
-   findings:'2臓器以上の症状：皮膚（蕁麻疹・紅潮）＋気道（喉の締まり・嗄声・喘鳴）＋循環（血圧低下・頻脈）。消化器症状（腹痛・嘔吐）が先行することもある。',
-   action:'エピネフリン筋注が最優先。用量0.01mg/kg（1:1000）、大腿中央外側、5〜15分ごとに反復可能。1回の上限は6〜12歳0.3mg、13歳以上0.5mg（アナフィラキシーガイドライン2022）。自己注射製剤（エピペン®）は15〜30kg未満0.15mg、30kg以上0.3mg。救急救命士の実施は処置拡大の範囲・所属プロトコルに従う。アレルゲン除去・酸素投与・迅速搬送。抗ヒスタミン薬は補助的のみ。',
+   findings:'急速に出る皮膚・粘膜症状（蕁麻疹・紅潮・唇の腫れ）に、重い呼吸の症状（喉の締まり・嗄声・喘鳴）、血圧低下などの循環の障害、強い消化器症状（腹痛・嘔吐）のいずれかが加われば疑う。原因として分かっている、または強く疑われるアレルゲンに触れた後の血圧低下・喘鳴・喉頭の症状は、皮膚症状がなくても疑う。',
+   action:'エピネフリン筋注が最優先。【参考：医療機関での一般的な用量】0.01mg/kg（1:1000）、大腿中央外側、5〜15分ごとに反復可能。1回の上限は6〜12歳0.3mg、13歳以上0.5mg（アナフィラキシーガイドライン2022）。【現場】自己注射製剤（エピペン®）は本人に処方された規格を確認（通常15〜30kg未満0.15mg、30kg以上0.3mg。15kg未満は処方医の判断）。救急救命士の実施は、適用される通知・認定・対象者・製剤・医師の指示の条件に従う（本人処方の自己注射製剤の使用とは区別する）。アレルゲン除去・酸素投与・迅速搬送。抗ヒスタミン薬は補助的のみ。',
    alert:'エピネフリン筋注が最優先。搬送を遅らせない。'},
   {id:'dehydration',name:'脱水・循環血液量減少性ショック',icon:'💧',color:'#c0392b',
    check:function(ab,pat,age){return['warn','danger'].includes(ab.c)||['warn','danger'].includes(pat.C);},
-   pathology:'嘔吐・下痢・発熱による体液喪失。小児は成人より早くショックに陥る。重症（>10%）ではショック症状・意識障害。',
+   pathology:'嘔吐・下痢・発熱による体液喪失。小児は血圧を保ったまま代償するため、血圧が正常でもショックを否定できない。代償が破綻すると急速に悪化する。',
    findings:'CRT延長（>2秒）、皮膚ツルゴール低下、眼窩陥凹、大泉門陥凹。重症では末梢冷感・まだら模様・著明な頻脈・意識障害。',
-   action:'軽症：経口補水。中等症以上・嘔吐継続：静脈路確保・輸液。ショック状態：迅速搬送＋輸液負荷。',
+   action:'意識・頻脈・末梢循環・尿量で総合評価。ABCを維持し迅速搬送。経口補水は意識がはっきりし嘔吐がない軽症に限る。静脈路確保・輸液は、認定救急救命士が適応・医師の具体的指示・地域MCプロトコルに従って行う（心肺機能停止前の輸液は原則15歳以上）。',
    alert:''},
   {id:'intussusception',name:'腸重積症',icon:'🫃',color:'#c0392b',
    check:function(ab,pat,age){if(!['infant','toddler'].includes(age)&&age)return false;return['warn','danger'].includes(ab.c)||['warn','danger'].includes(pat.C)||['warn','danger'].includes(pat.A);},
    pathology:'腸管が腸管内に入り込む状態。生後3ヶ月〜2歳に多い。血流障害が進むと腸管壊死に至る。早期発見・早期治療が予後を左右する。',
    findings:'三主徴：間欠的腹痛・嘔吐・血便（いちごゼリー状）。突然の強い腹痛で蒼白になり数分後に落ち着くを繰り返す。進行するとぐったり・ショック状態。',
-   action:'速やかな搬送。間欠的に激しく泣き蒼白になるを繰り返す乳幼児は腸重積を疑う。',
+   action:'速やかな搬送。飲食させない。ショックの徴候（頻脈・CRT延長・ぐったり）を監視。間欠的に激しく泣き蒼白になるを繰り返す乳幼児は腸重積を疑う。',
    alert:'血便は遅れて出現（初期は血便なしも多い）。繰り返す腹痛パターンが特徴的。'},
   {id:'appendicitis',name:'急性虫垂炎',icon:'🫃',color:'#8a5000',
    check:function(ab,pat,age){if(!['preschool','school'].includes(age)&&age)return false;return['warn','danger'].includes(ab.d)||['warn','danger'].includes(pat.A);},
    pathology:'虫垂の急性炎症。学童期に多い。幼児では症状が非典型的で穿孔リスクが高い。発熱・右下腹部痛が典型だが小児は訴えが不明確なことも多い。',
    findings:'臍周囲痛 → 右下腹部痛への移動。発熱・嘔吐・食欲不振。歩行時・揺れで痛みが増強。腹膜刺激症状（筋性防御・反跳痛）。',
-   action:'迅速搬送。幼児では右下腹部痛を上手く訴えられないため注意。穿孔・腹膜炎では緊急搬送。',
+   action:'迅速搬送。飲食させない。幼児では右下腹部痛を上手く訴えられないため注意。穿孔・腹膜炎を疑えばショックの徴候を監視し緊急搬送。',
    alert:''},
   {id:'head_trauma',name:'小児頭部外傷',icon:'🩹',color:'#6c2fa0',
    check:function(ab,pat,age){return['warn','danger'].includes(ab.e)||['warn','danger'].includes(ab.d);},
-   pathology:'小児は頭部が大きく頭蓋内出血のリスクがある。乳幼児は受傷機転を正確に説明できない。虐待による頭部外傷（揺さぶられっ子症候群）を念頭に置く。',
-   findings:'意識レベル低下（AVPU）、繰り返す嘔吐（頭蓋内圧亢進）、痙攣、瞳孔不同、大泉門膨隆（乳児）。受傷機転と外傷の一致性の確認が重要。',
-   action:'意識障害・繰り返す嘔吐・痙攣・開放骨折・受傷機転不一致 → 緊急搬送。受傷機転不明・乳児の意識障害は揺さぶられっ子症候群を疑う。',
+   pathology:'小児は頭部が大きく頭蓋内出血のリスクがある。乳幼児は受傷機転を正確に説明できない。虐待による頭部外傷（AHT：揺さぶり・打撃などを含む）も念頭に置く。',
+   findings:'意識レベル低下（AVPU）、繰り返す嘔吐（頭蓋内損傷を疑う所見）、痙攣、瞳孔不同、大泉門膨隆（乳児）。受傷機転と外傷の一致性の確認が重要。',
+   action:'意識障害・繰り返す嘔吐・痙攣・開放骨折・受傷機転不一致 → 緊急搬送。受傷機転不明・乳児の意識障害はAHTも考慮する（説明の不一致だけで虐待と決めつけない）。地域の搬送基準に従う。',
    alert:'外表に傷がなくても重篤な頭蓋内出血が生じうる。受傷機転不明の乳児意識障害は要注意。'},
   {id:'foreign_body',name:'誤飲・誤嚥',icon:'⚠️',color:'#8a5000',
    check:function(ab,pat,age){if(!['infant','toddler','preschool'].includes(age)&&age)return false;return['warn','danger'].includes(ab.a)||['warn','danger'].includes(pat.B)||['warn','danger'].includes(pat.A);},
-   pathology:'誤嚥（気道異物）は突然の咳嗽・喘鳴・チアノーゼ。誤飲ではボタン電池（数時間で食道穿孔）・磁石複数個（腸管穿孔）が超緊急。1〜3歳に多い。',
+   pathology:'誤嚥（気道異物）は突然の咳嗽・喘鳴・チアノーゼ。誤飲ではボタン電池（食道内では短時間で組織障害が進む）・磁石複数個（腸管穿孔）が超緊急。1〜3歳に多い。',
    findings:'誤嚥（完全閉塞）：咳ができない・声が出ない・チアノーゼ。ボタン電池誤飲：最初無症状でも急速悪化。磁石複数個：腸管穿孔リスク。',
-   action:'完全閉塞（有効な咳ができない）：乳児（1歳未満）は背部叩打＋胸部突き上げ。1歳以上は背部叩打→無効なら腹部突き上げ。反応がなくなればCPR。ボタン電池誤飲：嘔吐させない・原則飲食させない。即時搬送し、搬送を遅らせない。補助として、1歳以上・誤飲後12時間以内・嚥下可能な場合に限りハチミツ10mLを10分ごと（最大6回）とする考え方が海外（米国NCPC）にあるが、1歳未満には禁忌（乳児ボツリヌス症）。実施は所属プロトコル・医師の指示に従う。',
+   action:'有効な咳ができれば咳を促して監視。重度の気道閉塞（有効な咳ができない・声が出ない・呼吸が苦しい）では直ちに異物除去：乳児（1歳未満）は背部叩打＋胸部突き上げ。1歳以上は背部叩打→無効なら腹部突き上げ。反応がなくなればCPR。ボタン電池誤飲：嘔吐させない・原則飲食させない。即時搬送し、搬送を遅らせない。補助として、1歳以上・誤飲後12時間以内・嚥下可能な場合に限りハチミツ10mLを10分ごと（最大6回）とする考え方が海外（米国NCPC）にあるが、1歳未満には禁忌（乳児ボツリヌス症）。実施は所属プロトコル・医師の指示に従う。',
    alert:'ボタン電池誤飲は超緊急。2時間以内の内視鏡的除去が必要。遅発性合併症（瘻孔・出血）のリスクあり。'},
   {id:'hypoglycemia',name:'低血糖',icon:'🍬',color:'#0a6640',
    check:function(ab,pat,age){return['warn','danger'].includes(ab.d)||['warn','danger'].includes(pat.A);},
    pathology:'小児（特に乳幼児）はグリコーゲン貯蔵量が少なく、絶食・感染症・インスリン過剰投与で容易に低血糖になる。脳への影響が大きく迅速対応が必要。',
    findings:'発汗・顔面蒼白・振戦（交感神経症状）、傾眠・意識障害・痙攣（神経症状）。乳幼児は「ぐったり・哺乳不良・啼泣異常」で現れることも。',
-   action:'意識あり・嚥下可能：ブドウ糖含有飲料。意識障害：ブドウ糖静注（10%グルコース2mL/kg）。糖尿病治療中・インスリン使用歴をSAMPLEで確認。',
+   action:'目安：糖尿病治療中は70mg/dL未満で対応。糖尿病のない乳幼児は症状・背景も含めて評価し、1つの値だけで否定しない。十分に目が覚めていて安全に飲み込める場合：ブドウ糖を含む飲料。意識障害：気道・呼吸を確保し迅速搬送。救急救命士によるブドウ糖静注は、原則15歳以上・血糖50mg/dL未満などの所定の条件と医師の具体的指示に従う。糖尿病治療中・インスリン使用歴をSAMPLEで確認。',
    alert:''}
 ];
+const GUIDE_GROUPS=[['🫁 呼吸器系',['asthma','croup','bronchiolitis']],['🧠 神経系',['febrile_seizure','meningitis']],['❤️ 循環・ショック',['anaphylaxis','dehydration']],['🫃 消化器系',['intussusception','appendicitis']],['🩹 外傷・中毒',['head_trauma','foreign_body']],['🩸 代謝・内分泌',['hypoglycemia']]];
+function renderGuide(){
+  const el=document.getElementById('guide-cards');
+  if(el.dataset.done)return;
+  el.innerHTML=GUIDE_GROUPS.map(([g,ids])=>`<div class="card-title" style="margin:14px 0 6px;font-size:13px">${g}</div>`+renderDiseaseCards(DISEASES.filter(d=>ids.includes(d.id)),'g-')).join('');
+  el.dataset.done='1';
+}
 function getDifferentials(){
   const age=document.getElementById('ageGroup').value;
   return DISEASES.filter(d=>d.check(abcdeState,patState,age));
@@ -873,16 +890,18 @@ function toggleDis(id){
   const isOpen=body.classList.toggle('open');
   if(arr)arr.classList.toggle('open',isOpen);
 }
-function renderDiseaseCards(list){
+function renderDiseaseCards(list,pre){
+  pre=pre||'';
   return list.map(d=>{
+    const key=pre+d.id;
     const alertHtml=d.alert?`<div class="dis-alert-box dis-alert-danger" style="margin-top:10px">🔴 ${d.alert}</div>`:'';
     return `<div class="dis-item">
-  <div class="dis-header" onclick="toggleDis('${d.id}')">
+  <div class="dis-header" onclick="toggleDis('${key}')">
     <div class="dis-icon" style="background:${d.color}20;color:${d.color}">${d.icon}</div>
     <div class="dis-title-block"><div class="dis-name">${d.name}</div></div>
-    <div class="dis-arrow" id="arr-${d.id}">▼</div>
+    <div class="dis-arrow" id="arr-${key}">▼</div>
   </div>
-  <div class="dis-body" id="dis-${d.id}">
+  <div class="dis-body" id="dis-${key}">
     <div class="dis-section"><div class="dis-sec-title">病態</div><div class="dis-text">${d.pathology}</div></div>
     <div class="dis-section"><div class="dis-sec-title">観察のポイント</div><div class="dis-text">${d.findings}</div></div>
     <div class="dis-section"><div class="dis-sec-title">現場対応</div><div class="dis-text">${d.action}</div></div>

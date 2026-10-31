@@ -2,7 +2,7 @@
 // キャッシュ名（バージョンを上げると古いキャッシュが削除される）
 // 同じ公開先(baruto0217-cpu.github.io)のほかのアプリ(KUNREN等)の保存には触らない。emergency-suite- で始まるものだけ扱う
 const CACHE_PREFIX = 'emergency-suite-';
-const CACHE_NAME = CACHE_PREFIX + 'v36';
+const CACHE_NAME = CACHE_PREFIX + 'v37';
 
 // キャッシュするファイル一覧
 const CACHE_FILES = [
