@@ -78,6 +78,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI'
 .frame-header.seishinka{background:#1f3a5f;}
 
 .launcher-footer{margin-top:12px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center;padding:0 16px;}
+/* ほかのまとめアプリへ（同じ公開先なので同じタブで移る） */
+.suite-links{width:100%;max-width:420px;padding:0 16px;margin-top:18px;}
+.suite-links-title{font-size:12px;font-weight:700;color:rgba(255,255,255,0.55);margin:0 2px 8px;letter-spacing:0.08em;}
+.suite-links-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.suite-link{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:12px;text-decoration:none;color:#fff;
+  font-size:12px;font-weight:700;line-height:1.35;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);}
+.suite-link:active{transform:scale(0.97);background:rgba(255,255,255,0.12);}
+.suite-link span{font-size:20px;line-height:1;}
 
 /* ========== アプリフレーム ========== */
 .app-frame{
@@ -172,6 +180,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI'
       <div class="app-name">精神科<br>救急対応</div>
       <div class="app-desc">観察基準8・搬送先・措置入院・精神保健福祉法</div>
       <div class="app-tag">PSYCHIATRIC</div>
+    </div>
+  </div>
+  <div class="suite-links">
+    <div class="suite-links-title">ほかのまとめアプリ</div>
+    <div class="suite-links-row">
+      <a class="suite-link" href="/KUNREN/"><span>🧰</span>救急<br>訓練・現場ツール</a>
+      <a class="suite-link" href="/GAS-apps/"><span>🔗</span>救急<br>GASアプリ入口</a>
     </div>
   </div>
   <div class="launcher-footer">各アプリをタップして起動</div>
